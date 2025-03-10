@@ -35,3 +35,6 @@ Thumbs.db
 
 # Test coverage
 coverage/
+
+# GitHub Actions local files
+.github/.env
