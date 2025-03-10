@@ -1,0 +1,40 @@
+{
+  "name": "tycho-solver",
+  "version": "0.1.0",
+  "description": "Evolutionary computation and optimization library",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "prepublish": "npm run build",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [
+    "evolutionary computation",
+    "genetic algorithm",
+    "ga",
+    "evolutionary",
+    "optimization",
+    "metaheuristics",
+    "ec",
+    "typescript"
+  ],
+  "author": "Your Name",
+  "license": "MPL-2.0",
+  "dependencies": {
+    "typescript": "^5.8.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.5",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.2.2"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
+}
