@@ -38,3 +38,5 @@ coverage/
 
 # GitHub Actions local files
 .github/.env
+
+package-lock.json
