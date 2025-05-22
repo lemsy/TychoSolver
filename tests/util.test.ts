@@ -42,4 +42,24 @@ describe('geneticAlgorithmUtils', () => {
       }
     });
   });
+
+  describe('random', () => {
+    it('should generate a number within the given range', () => {
+      for (let i = 0; i < 100; i++) {
+        const value = require('../src/utils').random(5, 10);
+        expect(value).toBeGreaterThanOrEqual(5);
+        expect(value).toBeLessThan(10);
+      }
+    });
+  });
+
+  describe('randomInt', () => {
+    it('should generate an integer within the given inclusive range', () => {
+      for (let i = 0; i < 100; i++) {
+        const value = require('../src/utils').randomInt(1, 3);
+        expect([1, 2, 3]).toContain(value);
+        expect(Number.isInteger(value)).toBe(true);
+      }
+    });
+  });
 });
