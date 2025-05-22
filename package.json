@@ -24,6 +24,7 @@
   "author": "Your Name",
   "license": "MPL-2.0",
   "dependencies": {
+    "tycho-solver": "file:",
     "typescript": "^5.8.2"
   },
   "devDependencies": {
