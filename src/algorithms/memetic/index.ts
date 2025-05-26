@@ -1,3 +1,5 @@
+import { LocalSearch, NeighborhoodFunction, ObjectiveFunction } from '../../search/localSearch';
+
 export type Individual = {
     genome: any; // Replace 'any' with your genome type
     fitness: number;
@@ -14,7 +16,14 @@ export interface MemeticOptions {
     select: (population: Individual[]) => [Individual, Individual];
     crossover: (parent1: Individual, parent2: Individual) => Individual;
     mutate: (individual: Individual) => Individual;
-    localSearch: (individual: Individual) => Individual;
+
+    // Local search configuration using the general LocalSearch class
+    objectiveFunction: ObjectiveFunction<Individual>;
+    neighborhoodFunction: NeighborhoodFunction<Individual>;
+    localSearchOptions?: {
+        maxIterations?: number;
+        maximize?: boolean;
+    };
 }
 
 export function memeticAlgorithm(options: MemeticOptions): Individual {
@@ -25,7 +34,8 @@ export function memeticAlgorithm(options: MemeticOptions): Individual {
             ind.fitness = options.evaluate(ind);
             return ind;
         }
-    );
+    );    // Create a LocalSearch instance
+    const localSearcher = new LocalSearch<Individual>();
 
     for (let gen = 0; gen < options.generations; gen++) {
         const newPopulation: Individual[] = [];
@@ -47,7 +57,15 @@ export function memeticAlgorithm(options: MemeticOptions): Individual {
 
             // Local Search
             if (Math.random() < options.localSearchRate) {
-                offspring = options.localSearch(offspring);
+                // Use the general LocalSearch approach
+                const result = localSearcher.search(
+                    offspring,
+                    options.objectiveFunction,
+                    options.neighborhoodFunction,
+                    options.localSearchOptions
+                );
+                offspring = result.solution;
+                offspring.fitness = result.fitness;
             }
 
             offspring.fitness = options.evaluate(offspring);
