@@ -26,6 +26,11 @@ export interface LocalSearchOptions {
   randomRestarts?: number;
   /** Function to generate a random initial solution for restarts */
   randomInitializer?: () => any;
+  /**
+   * Optional callback called on every climb (improvement)
+   * Returns a Promise, but is not awaited (fire-and-forget)
+   */
+  onClimb?: (solution: any, fitness: number, iteration: number) => Promise<void>;
 }
 
 /**
@@ -59,7 +64,7 @@ export class LocalSearch<T> {
     neighborhoodFunction: NeighborhoodFunction<T>,
     options: LocalSearchOptions = {}
   ): LocalSearchResult<T> {
-    const { maxIterations = 1000, maximize = true, randomRestarts = 1, randomInitializer } = options;
+    const { maxIterations = 1000, maximize = true, randomRestarts = 1, randomInitializer, onClimb } = options;
 
     let bestSolution = initialSolution;
     let bestFitness = objectiveFunction(initialSolution);
@@ -84,6 +89,10 @@ export class LocalSearch<T> {
             currentSolution = neighbor;
             currentFitness = neighborFitness;
             improved = true;
+            // Notify asynchronously, fire-and-forget (do not await)
+            if (onClimb) {
+              onClimb(currentSolution, currentFitness, iterations);
+            }
             break;
           }
         }
