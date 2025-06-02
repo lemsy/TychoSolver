@@ -22,6 +22,10 @@ export interface LocalSearchOptions {
   maxIterations?: number;
   /** Whether to maximize (true) or minimize (false) the objective function */
   maximize?: boolean;
+  /** Number of random restarts (default: 1, i.e., no restart) */
+  randomRestarts?: number;
+  /** Function to generate a random initial solution for restarts */
+  randomInitializer?: () => any;
 }
 
 /**
@@ -55,42 +59,45 @@ export class LocalSearch<T> {
     neighborhoodFunction: NeighborhoodFunction<T>,
     options: LocalSearchOptions = {}
   ): LocalSearchResult<T> {
-    const { maxIterations = 1000, maximize = true } = options;
-    
-    let currentSolution = initialSolution;
-    let currentFitness = objectiveFunction(currentSolution);
-    let iterations = 0;
-    let improved = true;
-    
-    while (improved && iterations < maxIterations) {
-      improved = false;
-      iterations++;
-      
-      // Generate all neighbors
-      const neighbors = neighborhoodFunction(currentSolution);
-      
-      // Evaluate all neighbors
-      for (const neighbor of neighbors) {
-        const neighborFitness = objectiveFunction(neighbor);
-        
-        // Check if this neighbor is better
-        const isImprovement = maximize
-          ? neighborFitness > currentFitness
-          : neighborFitness < currentFitness;
-          
-        if (isImprovement) {
-          currentSolution = neighbor;
-          currentFitness = neighborFitness;
-          improved = true;
-          break; // First improvement strategy
+    const { maxIterations = 1000, maximize = true, randomRestarts = 1, randomInitializer } = options;
+
+    let bestSolution = initialSolution;
+    let bestFitness = objectiveFunction(initialSolution);
+    let bestIterations = 0;
+
+    for (let restart = 0; restart < randomRestarts; restart++) {
+      let currentSolution = restart === 0 ? initialSolution : (randomInitializer ? randomInitializer() : initialSolution);
+      let currentFitness = objectiveFunction(currentSolution);
+      let iterations = 0;
+      let improved = true;
+
+      while (improved && iterations < maxIterations) {
+        improved = false;
+        iterations++;
+        const neighbors = neighborhoodFunction(currentSolution);
+        for (const neighbor of neighbors) {
+          const neighborFitness = objectiveFunction(neighbor);
+          const isImprovement = maximize
+            ? neighborFitness > currentFitness
+            : neighborFitness < currentFitness;
+          if (isImprovement) {
+            currentSolution = neighbor;
+            currentFitness = neighborFitness;
+            improved = true;
+            break;
+          }
         }
       }
+      if ((maximize && currentFitness > bestFitness) || (!maximize && currentFitness < bestFitness)) {
+        bestSolution = currentSolution;
+        bestFitness = currentFitness;
+        bestIterations = iterations;
+      }
     }
-    
     return {
-      solution: currentSolution,
-      fitness: currentFitness,
-      iterations
+      solution: bestSolution,
+      fitness: bestFitness,
+      iterations: bestIterations
     };
   }
 }
