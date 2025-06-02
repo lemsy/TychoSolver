@@ -7,6 +7,14 @@ export interface ObjectiveFunction<T> {
 }
 
 /**
+ * Interface for defining the cost function to break ties in objective value
+ * @typeparam T - The type of solution representation
+ */
+export interface CostFunction<T> {
+  (solution: T): number;
+}
+
+/**
  * Interface for defining how to generate neighboring solutions
  * @typeparam T - The type of solution representation
  */
@@ -31,6 +39,14 @@ export interface LocalSearchOptions {
    * Returns a Promise, but is not awaited (fire-and-forget)
    */
   onClimb?: (solution: any, fitness: number, iteration: number) => Promise<void>;
+  /**
+   * Optional cost function to break ties when objective values are equal
+   */
+  costFunction?: CostFunction<any>;
+  /**
+   * Whether to maximize (true) or minimize (false) the cost function (default: false)
+   */
+  maximizeCost?: boolean;
 }
 
 /**
@@ -85,11 +101,19 @@ export class LocalSearch<T> {
           const isImprovement = maximize
             ? neighborFitness > currentFitness
             : neighborFitness < currentFitness;
-          if (isImprovement) {
+          let isTie = neighborFitness === currentFitness;
+          let isCostImprovement = false;
+          if (isTie && options.costFunction) {
+            const currentCost = options.costFunction(currentSolution);
+            const neighborCost = options.costFunction(neighbor);
+            isCostImprovement = (options.maximizeCost ?? false)
+              ? neighborCost > currentCost
+              : neighborCost < currentCost;
+          }
+          if (isImprovement || (isTie && isCostImprovement)) {
             currentSolution = neighbor;
             currentFitness = neighborFitness;
             improved = true;
-            // Notify asynchronously, fire-and-forget (do not await)
             if (onClimb) {
               onClimb(currentSolution, currentFitness, iterations);
             }
