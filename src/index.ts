@@ -98,3 +98,6 @@ export * from './algorithms';
 
 // Utility functions
 export * from './utils';
+
+// Local search algorithm and types
+export * from './search/localSearch';
