@@ -52,6 +52,10 @@ export interface LocalSearchOptions<T = any> {
    * and will not stop early if no improvement is found in the current neighborhood.
    */
   dynamicNeighborhoodFunction?: NeighborhoodFunction<T>;
+  /**
+   * Optional fitness limit. If a solution reaches this fitness value, the search will stop early.
+   */
+  fitnessLimit?: number;
 }
 
 /**
@@ -85,7 +89,7 @@ export class LocalSearch<T> {
     neighborhoodFunction: NeighborhoodFunction<T>,
     options: LocalSearchOptions<T> = {}
   ): Promise<LocalSearchResult<T>> {
-    const { maxIterations = 1000, maximize = true, randomRestarts = 1, randomInitializer, onClimb, dynamicNeighborhoodFunction } = options;
+    const { maxIterations = 1000, maximize = true, randomRestarts = 1, randomInitializer, onClimb, dynamicNeighborhoodFunction, fitnessLimit } = options;
 
     let bestSolution = initialSolution;
     let bestFitness = await objectiveFunction(initialSolution);
@@ -106,6 +110,7 @@ export class LocalSearch<T> {
           : neighborhoodFunction(currentSolution);
         for (const neighbor of neighbors) {
           const neighborFitness = await objectiveFunction(neighbor);
+
           const isImprovement = maximize
             ? neighborFitness > currentFitness
             : neighborFitness < currentFitness;
@@ -125,6 +130,14 @@ export class LocalSearch<T> {
             if (onClimb) {
               onClimb(currentSolution, currentFitness, iterations);
             }
+            // Directly return if fitness limit is reached
+            if (typeof fitnessLimit === 'number' && ((maximize && currentFitness >= fitnessLimit) || (!maximize && currentFitness <= fitnessLimit))) {
+              return {
+                solution: currentSolution,
+                fitness: currentFitness,
+                iterations: iterations
+              };
+            }
             break;
           }
         }
@@ -135,10 +148,11 @@ export class LocalSearch<T> {
         bestIterations = iterations;
       }
     }
+
     return {
       solution: bestSolution,
       fitness: bestFitness,
-      iterations: bestIterations
+      iterations: bestIterations,
     };
   }
 }
