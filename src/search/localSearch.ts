@@ -25,7 +25,7 @@ export interface NeighborhoodFunction<T> {
 /**
  * Options for configuring the local search algorithm
  */
-export interface LocalSearchOptions {
+export interface LocalSearchOptions<T = any> {
   /** Maximum number of iterations */
   maxIterations?: number;
   /** Whether to maximize (true) or minimize (false) the objective function */
@@ -33,20 +33,25 @@ export interface LocalSearchOptions {
   /** Number of random restarts (default: 1, i.e., no restart) */
   randomRestarts?: number;
   /** Function to generate a random initial solution for restarts */
-  randomInitializer?: () => any;
+  randomInitializer?: () => T;
   /**
    * Optional callback called on every climb (improvement)
    * Returns a Promise, but is not awaited (fire-and-forget)
    */
-  onClimb?: (solution: any, fitness: number, iteration: number) => Promise<void>;
+  onClimb?: (solution: T, fitness: number, iteration: number) => Promise<void>;
   /**
    * Optional cost function to break ties when objective values are equal
    */
-  costFunction?: CostFunction<any>;
+  costFunction?: CostFunction<T>;
   /**
    * Whether to maximize (true) or minimize (false) the cost function (default: false)
    */
   maximizeCost?: boolean;
+  /**
+   * Optional dynamic neighborhood function. If provided, the search will use this function to generate neighbors at each iteration,
+   * and will not stop early if no improvement is found in the current neighborhood.
+   */
+  dynamicNeighborhoodFunction?: NeighborhoodFunction<T>;
 }
 
 /**
@@ -78,9 +83,9 @@ export class LocalSearch<T> {
     initialSolution: T,
     objectiveFunction: ObjectiveFunction<T>,
     neighborhoodFunction: NeighborhoodFunction<T>,
-    options: LocalSearchOptions = {}
+    options: LocalSearchOptions<T> = {}
   ): Promise<LocalSearchResult<T>> {
-    const { maxIterations = 1000, maximize = true, randomRestarts = 1, randomInitializer, onClimb } = options;
+    const { maxIterations = 1000, maximize = true, randomRestarts = 1, randomInitializer, onClimb, dynamicNeighborhoodFunction } = options;
 
     let bestSolution = initialSolution;
     let bestFitness = await objectiveFunction(initialSolution);
@@ -92,10 +97,13 @@ export class LocalSearch<T> {
       let iterations = 0;
       let improved = true;
 
-      while (improved && iterations < maxIterations) {
-        improved = false;
+      // If dynamicNeighborhoodFunction is provided, ignore 'improved' and always run for maxIterations
+      while ((dynamicNeighborhoodFunction ? iterations < maxIterations : (improved && iterations < maxIterations))) {
+        if (!dynamicNeighborhoodFunction) improved = false;
         iterations++;
-        const neighbors = neighborhoodFunction(currentSolution);
+        const neighbors = dynamicNeighborhoodFunction
+          ? dynamicNeighborhoodFunction(currentSolution)
+          : neighborhoodFunction(currentSolution);
         for (const neighbor of neighbors) {
           const neighborFitness = await objectiveFunction(neighbor);
           const isImprovement = maximize
@@ -113,7 +121,7 @@ export class LocalSearch<T> {
           if (isImprovement || (isTie && isCostImprovement)) {
             currentSolution = neighbor;
             currentFitness = neighborFitness;
-            improved = true;
+            if (!dynamicNeighborhoodFunction) improved = true;
             if (onClimb) {
               onClimb(currentSolution, currentFitness, iterations);
             }
