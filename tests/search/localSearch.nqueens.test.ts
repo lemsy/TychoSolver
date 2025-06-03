@@ -44,10 +44,10 @@ describe('LocalSearch - N-Queens with cost function tie-breaking', () => {
         return Array.from({ length: N }, () => Math.floor(Math.random() * N));
     }
 
-    it('finds a solution and uses cost function to break ties', () => {
+    it('finds a solution and uses cost function to break ties', async () => {
         const initial = randomBoard();
         const search = new LocalSearch<Board>();
-        const result = search.search(
+        const result = await search.search(
             initial,
             objective,
             neighborhood,

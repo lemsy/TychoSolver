@@ -3,7 +3,7 @@
  * @typeparam T - The type of solution representation
  */
 export interface ObjectiveFunction<T> {
-  (solution: T): number;
+  (solution: T): number | Promise<number>;
 }
 
 /**
@@ -11,7 +11,7 @@ export interface ObjectiveFunction<T> {
  * @typeparam T - The type of solution representation
  */
 export interface CostFunction<T> {
-  (solution: T): number;
+  (solution: T): number | Promise<number>;
 }
 
 /**
@@ -74,21 +74,21 @@ export class LocalSearch<T> {
    * @param options - Configuration options
    * @returns The best solution found and associated information
    */
-  public search(
+  public async search(
     initialSolution: T,
     objectiveFunction: ObjectiveFunction<T>,
     neighborhoodFunction: NeighborhoodFunction<T>,
     options: LocalSearchOptions = {}
-  ): LocalSearchResult<T> {
+  ): Promise<LocalSearchResult<T>> {
     const { maxIterations = 1000, maximize = true, randomRestarts = 1, randomInitializer, onClimb } = options;
 
     let bestSolution = initialSolution;
-    let bestFitness = objectiveFunction(initialSolution);
+    let bestFitness = await objectiveFunction(initialSolution);
     let bestIterations = 0;
 
     for (let restart = 0; restart < randomRestarts; restart++) {
       let currentSolution = restart === 0 ? initialSolution : (randomInitializer ? randomInitializer() : initialSolution);
-      let currentFitness = objectiveFunction(currentSolution);
+      let currentFitness = await objectiveFunction(currentSolution);
       let iterations = 0;
       let improved = true;
 
@@ -97,15 +97,15 @@ export class LocalSearch<T> {
         iterations++;
         const neighbors = neighborhoodFunction(currentSolution);
         for (const neighbor of neighbors) {
-          const neighborFitness = objectiveFunction(neighbor);
+          const neighborFitness = await objectiveFunction(neighbor);
           const isImprovement = maximize
             ? neighborFitness > currentFitness
             : neighborFitness < currentFitness;
           let isTie = neighborFitness === currentFitness;
           let isCostImprovement = false;
           if (isTie && options.costFunction) {
-            const currentCost = options.costFunction(currentSolution);
-            const neighborCost = options.costFunction(neighbor);
+            const currentCost = await options.costFunction(currentSolution);
+            const neighborCost = await options.costFunction(neighbor);
             isCostImprovement = (options.maximizeCost ?? false)
               ? neighborCost > currentCost
               : neighborCost < currentCost;

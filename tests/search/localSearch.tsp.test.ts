@@ -58,7 +58,7 @@ describe('LocalSearch - Traveling Salesman Problem (TSP) with onClimb notificati
         };
 
         const search = new LocalSearch<Tour>();
-        const result = search.search(
+        search.search(
             initial,
             objective,
             neighborhood,
@@ -69,17 +69,17 @@ describe('LocalSearch - Traveling Salesman Problem (TSP) with onClimb notificati
                 randomInitializer: randomTour,
                 onClimb,
             }
-        );
+        ).then(result => {
+            // Synchronous expects (immediate results)
+            expect(-result.fitness).toBe(4);
+            expect(result.solution.length).toBe(numCities);
 
-        // Synchronous expects (immediate results)
-        expect(-result.fitness).toBe(4);
-        expect(result.solution.length).toBe(numCities);
-
-        // Asynchronous expects (wait for climbs to be populated)
-        setTimeout(() => {
-            expect(climbs.length).toBeGreaterThan(0);
-            expect(climbs[climbs.length - 1].fitness).toBe(result.fitness);
-            done();
-        }, 20);
+            // Asynchronous expects (wait for climbs to be populated)
+            setTimeout(() => {
+                expect(climbs.length).toBeGreaterThan(0);
+                expect(climbs[climbs.length - 1].fitness).toBe(result.fitness);
+                done();
+            }, 20);
+        });
     });
 });

@@ -11,8 +11,8 @@ export interface MemeticOptions {
     crossoverRate: number;
     mutationRate: number;
     localSearchRate: number;
-    initialize: () => Individual;
-    evaluate: (individual: Individual) => number;
+    initialize: () => Individual | Promise<Individual>;
+    evaluate: (individual: Individual) => number | Promise<number>;
     select: (population: Individual[]) => [Individual, Individual];
     crossover: (parent1: Individual, parent2: Individual) => Individual;
     mutate: (individual: Individual) => Individual;
@@ -23,18 +23,18 @@ export interface MemeticOptions {
     localSearchOptions?: {
         maxIterations?: number;
         maximize?: boolean;
+        costFunction?: (solution: Individual) => number | Promise<number>;
+        maximizeCost?: boolean;
     };
 }
 
-export function memeticAlgorithm(options: MemeticOptions): Individual {
-    let population: Individual[] = Array.from(
-        { length: options.populationSize },
-        () => {
-            const ind = options.initialize();
-            ind.fitness = options.evaluate(ind);
-            return ind;
-        }
-    );    // Create a LocalSearch instance
+export async function memeticAlgorithm(options: MemeticOptions): Promise<Individual> {
+    let population: Individual[] = [];
+    for (let i = 0; i < options.populationSize; i++) {
+        const ind = await options.initialize();
+        ind.fitness = await options.evaluate(ind);
+        population.push(ind);
+    }    // Create a LocalSearch instance
     const localSearcher = new LocalSearch<Individual>();
 
     for (let gen = 0; gen < options.generations; gen++) {
@@ -58,7 +58,7 @@ export function memeticAlgorithm(options: MemeticOptions): Individual {
             // Local Search
             if (Math.random() < options.localSearchRate) {
                 // Use the general LocalSearch approach
-                const result = localSearcher.search(
+                const result = await localSearcher.search(
                     offspring,
                     options.objectiveFunction,
                     options.neighborhoodFunction,
@@ -68,7 +68,7 @@ export function memeticAlgorithm(options: MemeticOptions): Individual {
                 offspring.fitness = result.fitness;
             }
 
-            offspring.fitness = options.evaluate(offspring);
+            offspring.fitness = await options.evaluate(offspring);
             newPopulation.push(offspring);
         }
 

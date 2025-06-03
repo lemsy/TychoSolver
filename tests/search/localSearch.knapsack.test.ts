@@ -1,7 +1,7 @@
 import { LocalSearch, ObjectiveFunction, NeighborhoodFunction } from '../../src/search/localSearch';
 
 describe('LocalSearch - Knapsack Problem', () => {
-    it('should solve a simple 0/1 knapsack problem', () => {
+    it('should solve a simple 0/1 knapsack problem', async () => {
         // Define items with value and weight
         const items = [
             { value: 6, weight: 2 },
@@ -39,7 +39,7 @@ describe('LocalSearch - Knapsack Problem', () => {
 
         const localSearch = new LocalSearch<number[]>();
         const initialSolution = Array(n).fill(0); // Start with all zeros
-        const result = localSearch.search(initialSolution, objectiveFunction, neighborhoodFunction, {
+        const result = await localSearch.search(initialSolution, objectiveFunction, neighborhoodFunction, {
             randomRestarts: 20,
             randomInitializer: () => Array.from({ length: n }, () => Math.round(Math.random())),
             maxIterations: 1000,

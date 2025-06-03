@@ -1,7 +1,7 @@
 import { LocalSearch, ObjectiveFunction, NeighborhoodFunction } from '../../src/search/localSearch';
 
 describe('LocalSearch - Deceptive Trap Function', () => {
-    it('should solve the Deceptive Trap problem (for k=5)', () => {
+    it('should solve the Deceptive Trap problem (for k=5)', async () => {
         // Deceptive Trap function for k=5
         // For each block of 5 bits:
         //   if all bits are 1: score = 5
@@ -37,7 +37,7 @@ describe('LocalSearch - Deceptive Trap Function', () => {
         const localSearch = new LocalSearch<number[]>();
         const initialSolution = Array(n).fill(0); // Start with all zeros
         // Add random restarts configuration
-        const result = localSearch.search(initialSolution, objectiveFunction, neighborhoodFunction, {
+        const result = await localSearch.search(initialSolution, objectiveFunction, neighborhoodFunction, {
             randomRestarts: 100,
             randomInitializer: () => Array.from({ length: n }, () => Math.round(Math.random())),
             maxIterations: 1000,

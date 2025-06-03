@@ -2,13 +2,13 @@ import { Individual, memeticAlgorithm } from '../../src/algorithms/memetic';
 import { NeighborhoodFunction, ObjectiveFunction } from '../../src/search/localSearch';
 
 describe('memeticAlgorithm', () => {
-    it('should return a solution for a simple numerical problem', () => {
+    it('should return a solution for a simple numerical problem', async () => {
         // Example problem: maximize f(x) = x^2 for x in [0, 10]
-        const fitness = (x: Individual) => {
+        const fitness = async (x: Individual) => {
             return x.genome * x.genome;
         };
 
-        const createIndividual = (): Individual => {
+        const createIndividual = async (): Promise<Individual> => {
             return {
                 genome: Math.floor(Math.random() * 11),
                 fitness: 0,
@@ -43,7 +43,7 @@ describe('memeticAlgorithm', () => {
             return neighbors;
         };
 
-        const result = memeticAlgorithm({
+        const result = await memeticAlgorithm({
             populationSize: 10,
             generations: 20,
             crossoverRate: 0.7,
@@ -65,14 +65,14 @@ describe('memeticAlgorithm', () => {
             }
         });
 
-        expect(result.genome).toBeGreaterThanOrEqual(0);
-        expect(result.genome).toBeLessThanOrEqual(10);
+        expect((await result).genome).toBeGreaterThanOrEqual(0);
+        expect((await result).genome).toBeLessThanOrEqual(10);
         // The best solution should be 10 (since 10^2 = 100 is max)
-        expect(result.genome).toBe(10);
-        expect(result.fitness).toBe(100);
+        expect((await result).genome).toBe(10);
+        expect((await result).fitness).toBe(100);
     });
 
-    it('should solve a binary optimization problem', () => {
+    it('should solve a binary optimization problem', async () => {
         // Define a binary optimization problem (maximize number of 1s)
         type BinaryGenome = number[];
         const GENOME_LENGTH = 20;
@@ -83,7 +83,7 @@ describe('memeticAlgorithm', () => {
         };
 
         // Count the number of 1s in the genome (objective function)
-        const countOnes: ObjectiveFunction<Individual> = (individual: Individual) => {
+        const countOnes: ObjectiveFunction<Individual> = async (individual: Individual) => {
             const genome = individual.genome as BinaryGenome;
             return genome.reduce((sum, gene) => sum + gene, 0);
         };
@@ -105,7 +105,7 @@ describe('memeticAlgorithm', () => {
             return neighbors;
         };
 
-        const result = memeticAlgorithm({
+        const result = await memeticAlgorithm({
             populationSize: 20,
             generations: 10,
             crossoverRate: 0.8,
@@ -113,7 +113,7 @@ describe('memeticAlgorithm', () => {
             localSearchRate: 0.2,
 
             // Initialize a random individual
-            initialize: () => ({
+            initialize: async () => ({
                 genome: createRandomBinaryGenome(),
                 fitness: 0
             }),
@@ -174,12 +174,12 @@ describe('memeticAlgorithm', () => {
             }
         });
 
-        expect(Array.isArray(result.genome)).toBe(true);
-        expect((result.genome as BinaryGenome).length).toBe(GENOME_LENGTH);
+        expect(Array.isArray((await result).genome)).toBe(true);
+        expect(((await result).genome as BinaryGenome).length).toBe(GENOME_LENGTH);
 
         // Given enough iterations, all bits should be 1s (or very close)
-        const countOfOnes = (result.genome as BinaryGenome).filter(bit => bit === 1).length;
+        const countOfOnes = ((await result).genome as BinaryGenome).filter(bit => bit === 1).length;
         expect(countOfOnes).toBeGreaterThanOrEqual(GENOME_LENGTH * 0.9); // At least 90% of bits should be 1
-        expect(result.fitness).toBe(countOfOnes);
+        expect((await result).fitness).toBe(countOfOnes);
     });
 });
