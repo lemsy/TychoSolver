@@ -1,7 +1,7 @@
-import { memeticAlgorithm, Individual } from '../../src/algorithms/memetic';
+import { MemeticAlgorithm, Individual } from '../../src/algorithms/memetic';
 import { NeighborhoodFunction, ObjectiveFunction } from '../../src/search/localSearch';
 
-describe('memeticAlgorithm', () => {
+describe('MemeticAlgorithm', () => {
     it('should return a solution for a simple numerical problem', async () => {
         // Example problem: maximize f(x) = x^2 for x in [0, 10]
         const fitness = async (x: number) => {
@@ -34,7 +34,7 @@ describe('memeticAlgorithm', () => {
             return neighbors;
         };
 
-        const result = await memeticAlgorithm<number>({
+        const algo = new MemeticAlgorithm<number>({
             populationSize: 10,
             generations: 20,
             crossoverRate: 0.7,
@@ -56,6 +56,7 @@ describe('memeticAlgorithm', () => {
             }
         });
 
+        const result = await algo.evolve();
         expect(result.genome).toBeGreaterThanOrEqual(0);
         expect(result.genome).toBeLessThanOrEqual(10);
         // The best solution should be 10 (since 10^2 = 100 is max)
@@ -91,18 +92,14 @@ describe('memeticAlgorithm', () => {
             return neighbors;
         };
 
-        const result = await memeticAlgorithm<BinaryGenome>({
+        const algo = new MemeticAlgorithm<BinaryGenome>({
             populationSize: 20,
             generations: 10,
             crossoverRate: 0.8,
             mutationRate: 0.1,
             localSearchRate: 0.2,
-
-            // Initialize a random individual
             initialize: async () => createRandomBinaryGenome(),
-            // Evaluation function
             evaluate: countOnes,
-            // Tournament selection
             select: (population: Individual<BinaryGenome>[]) => {
                 const tournamentSize = 3;
                 const tournament = () => {
@@ -116,7 +113,6 @@ describe('memeticAlgorithm', () => {
                 };
                 return [tournament(), tournament()];
             },
-            // Single-point crossover
             crossover: (parent1, parent2) => {
                 const point = Math.floor(Math.random() * parent1.length);
                 const childGenome = [
@@ -125,14 +121,12 @@ describe('memeticAlgorithm', () => {
                 ];
                 return childGenome;
             },
-            // Bit-flip mutation
             mutate: (genome) => {
                 const newGenome = [...genome];
                 const mutationPoint = Math.floor(Math.random() * newGenome.length);
                 newGenome[mutationPoint] = 1 - newGenome[mutationPoint]; // Flip the bit
                 return newGenome;
             },
-            // Local search configuration
             objectiveFunction: countOnes,
             neighborhoodFunction: flipOneBitNeighborhood,
             localSearchOptions: {
@@ -141,6 +135,7 @@ describe('memeticAlgorithm', () => {
             }
         });
 
+        const result = await algo.evolve();
         expect(Array.isArray(result.genome)).toBe(true);
         expect(result.genome.length).toBe(GENOME_LENGTH);
 

@@ -16,8 +16,6 @@ export interface MemeticOptions<T> {
     select: (population: Individual<T>[]) => [Individual<T>, Individual<T>];
     crossover: (parent1: T, parent2: T) => T;
     mutate: (individual: T) => T;
-
-    // Local search configuration using the general LocalSearch class
     objectiveFunction: ObjectiveFunction<T>;
     neighborhoodFunction: NeighborhoodFunction<T>;
     localSearchOptions?: {
@@ -28,49 +26,79 @@ export interface MemeticOptions<T> {
     };
 }
 
-export async function memeticAlgorithm<T>(options: MemeticOptions<T>): Promise<Individual<T>> {
-    let population: Individual<T>[] = [];
-    for (let i = 0; i < options.populationSize; i++) {
-        const genome = await options.initialize();
-        const fitness = await options.evaluate(genome);
-        population.push({ genome, fitness });
+export class MemeticAlgorithm<T> {
+    private population: Individual<T>[] = [];
+    private config: MemeticOptions<T>;
+    private localSearcher: LocalSearch<T>;
+    private bestIndividual: Individual<T> | null = null;
+
+    constructor(config: MemeticOptions<T>) {
+        this.config = config;
+        this.localSearcher = new LocalSearch<T>();
     }
-    const localSearcher = new LocalSearch<T>();
-    for (let gen = 0; gen < options.generations; gen++) {
-        const newPopulation: Individual<T>[] = [];
-        while (newPopulation.length < options.populationSize) {
-            // Selection
-            const [parent1, parent2] = options.select(population);
-            // Crossover
-            let offspringGenome =
-                Math.random() < options.crossoverRate
-                    ? options.crossover(parent1.genome, parent2.genome)
-                    : parent1.genome;
-            // Mutation
-            if (Math.random() < options.mutationRate) {
-                offspringGenome = options.mutate(offspringGenome);
-            }
-            // Local Search
-            if (Math.random() < options.localSearchRate) {
-                const result = await localSearcher.search(
-                    offspringGenome,
-                    options.objectiveFunction,
-                    options.neighborhoodFunction,
-                    options.localSearchOptions
-                );
-                offspringGenome = result.solution;
-            }
-            const offspringFitness = await options.evaluate(offspringGenome);
-            newPopulation.push({ genome: offspringGenome, fitness: offspringFitness });
+
+    public async initializePopulation() {
+        this.population = [];
+        for (let i = 0; i < this.config.populationSize; i++) {
+            const genome = await this.config.initialize();
+            const fitness = await this.config.evaluate(genome);
+            this.population.push({ genome, fitness });
         }
-        population = newPopulation;
+        this.updateBest();
     }
-    // Return the best individual
-    let best = population[0];
-    for (let i = 1; i < population.length; i++) {
-        if (population[i].fitness > best.fitness) {
-            best = population[i];
+
+    public async evolve(): Promise<Individual<T>> {
+        if (this.population.length === 0) {
+            await this.initializePopulation();
         }
+        for (let gen = 0; gen < this.config.generations; gen++) {
+            const newPopulation: Individual<T>[] = [];
+            while (newPopulation.length < this.config.populationSize) {
+                // Selection
+                const [parent1, parent2] = this.config.select(this.population);
+                // Crossover
+                let offspringGenome =
+                    Math.random() < this.config.crossoverRate
+                        ? this.config.crossover(parent1.genome, parent2.genome)
+                        : parent1.genome;
+                // Mutation
+                if (Math.random() < this.config.mutationRate) {
+                    offspringGenome = this.config.mutate(offspringGenome);
+                }
+                // Local Search
+                if (Math.random() < this.config.localSearchRate) {
+                    const result = await this.localSearcher.search(
+                        offspringGenome,
+                        this.config.objectiveFunction,
+                        this.config.neighborhoodFunction,
+                        this.config.localSearchOptions
+                    );
+                    offspringGenome = result.solution;
+                }
+                const offspringFitness = await this.config.evaluate(offspringGenome);
+                newPopulation.push({ genome: offspringGenome, fitness: offspringFitness });
+            }
+            this.population = newPopulation;
+            this.updateBest();
+        }
+        return this.getBestIndividual();
     }
-    return best;
+
+    public getBestIndividual(): Individual<T> {
+        if (!this.bestIndividual && this.population.length > 0) {
+            this.updateBest();
+        }
+        return this.bestIndividual!;
+    }
+
+    private updateBest() {
+        if (this.population.length === 0) return;
+        this.bestIndividual = this.population.reduce((best, ind) =>
+            ind.fitness > best.fitness ? ind : best
+        );
+    }
+
+    public getPopulation(): Individual<T>[] {
+        return this.population;
+    }
 }
