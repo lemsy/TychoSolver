@@ -115,7 +115,7 @@ console.log('Fitness:', ga.getBestFitness());
 Memetic algorithms combine global search (genetic algorithm) with local search to refine solutions:
 
 ```typescript
-import { memeticAlgorithm } from 'tycho-solver';
+import { MemeticAlgorithm } from 'tycho-solver';
 
 // Example: Traveling Salesman Problem (TSP)
 const cities = [
@@ -128,131 +128,88 @@ const cities = [
   { x: 200, y: 160 }
 ];
 
-// Calculate distance between cities
-const distance = (city1: typeof cities[0], city2: typeof cities[0]) => {
+const distance = (city1, city2) => {
   return Math.sqrt(Math.pow(city1.x - city2.x, 2) + Math.pow(city1.y - city2.y, 2));
 };
 
-// Initialize the memetic algorithm options
 const memeticOptions = {
   populationSize: 30,
   generations: 50,
   crossoverRate: 0.9,
   mutationRate: 0.2,
-  localSearchRate: 0.3, // Apply local search to 30% of individuals
-  
-  // Initialize a random permutation of cities
+  localSearchRate: 0.3,
   initialize: () => {
     const indices = Array.from({ length: cities.length }, (_, i) => i);
-    // Fisher-Yates shuffle
     for (let i = indices.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [indices[i], indices[j]] = [indices[j], indices[i]];
     }
-    return { genome: indices, fitness: 0 };
+    return indices;
   },
-  
-  // Fitness is inverse of total route length (shorter is better)
-  evaluate: (individual) => {
-    const route = individual.genome;
+  evaluate: (route) => {
     let totalDistance = 0;
-    
     for (let i = 0; i < route.length; i++) {
       const from = cities[route[i]];
-      const to = cities[route[(i + 1) % route.length]];
+      const to = cities[(route[(i + 1) % route.length])];
       totalDistance += distance(from, to);
     }
-    
-    return 1000 / totalDistance; // Invert so higher is better
+    return 1000 / totalDistance;
   },
-  
-  // Tournament selection
   select: (population) => {
     const tournament = (size = 3) => {
-      const contestants = Array.from({ length: size }, () => 
+      const contestants = Array.from({ length: size }, () =>
         population[Math.floor(Math.random() * population.length)]
       );
-      return contestants.reduce((best, ind) => 
+      return contestants.reduce((best, ind) =>
         ind.fitness > best.fitness ? ind : best, contestants[0]
       );
     };
     return [tournament(), tournament()];
   },
-  
-  // Order crossover (OX)
   crossover: (parent1, parent2) => {
-    const size = parent1.genome.length;
+    const size = parent1.length;
     const start = Math.floor(Math.random() * size);
     const end = start + Math.floor(Math.random() * (size - start));
-    
-    // Create offspring with segment from parent1
-    const offspring = { 
-      genome: Array(size).fill(-1), 
-      fitness: 0 
-    };
-    
-    // Copy segment from parent1
+    const offspring = Array(size).fill(-1);
     for (let i = start; i <= end; i++) {
-      offspring.genome[i] = parent1.genome[i];
+      offspring[i] = parent1[i];
     }
-    
-    // Fill remaining positions with values from parent2 in order
     let j = (end + 1) % size;
     for (let i = 0; i < size; i++) {
       const nextPos = (end + 1 + i) % size;
-      if (offspring.genome[nextPos] === -1) { // If position is empty
-        // Find next value from parent2 that's not already in offspring
-        while (offspring.genome.includes(parent2.genome[j])) {
+      if (offspring[nextPos] === -1) {
+        while (offspring.includes(parent2[j])) {
           j = (j + 1) % size;
         }
-        offspring.genome[nextPos] = parent2.genome[j];
+        offspring[nextPos] = parent2[j];
       }
     }
-    
     return offspring;
   },
-  
-  // Swap mutation
-  mutate: (individual) => {
-    const genome = [...individual.genome];
-    const idx1 = Math.floor(Math.random() * genome.length);
-    let idx2 = Math.floor(Math.random() * genome.length);
-    
-    // Ensure different indices
+  mutate: (genome) => {
+    const genomeCopy = [...genome];
+    const idx1 = Math.floor(Math.random() * genomeCopy.length);
+    let idx2 = Math.floor(Math.random() * genomeCopy.length);
     while (idx1 === idx2) {
-      idx2 = Math.floor(Math.random() * genome.length);
+      idx2 = Math.floor(Math.random() * genomeCopy.length);
     }
-    
-    // Swap cities
-    [genome[idx1], genome[idx2]] = [genome[idx2], genome[idx1]];
-    
-    return { genome, fitness: 0 };
+    [genomeCopy[idx1], genomeCopy[idx2]] = [genomeCopy[idx2], genomeCopy[idx1]];
+    return genomeCopy;
   },
-  
-  // Local search configuration
-  objectiveFunction: (solution) => {
+  objectiveFunction: (route) => {
     let totalDistance = 0;
-    const route = solution.genome;
-    
     for (let i = 0; i < route.length; i++) {
       const from = cities[route[i]];
-      const to = cities[route[(i + 1) % route.length]];
+      const to = cities[(route[(i + 1) % route.length])];
       totalDistance += distance(from, to);
     }
-    
     return 1000 / totalDistance;
   },
-  
-  // 2-opt neighborhood function for TSP
-  neighborhoodFunction: (solution) => {
+  neighborhoodFunction: (route) => {
     const neighbors = [];
-    const route = solution.genome;
-    
-    // Generate neighbors by reversing segments
     for (let i = 0; i < route.length - 1; i++) {
       for (let j = i + 1; j < route.length; j++) {
         const newRoute = [...route];
-        // Reverse the segment between i and j
         let left = i;
         let right = j;
         while (left < right) {
@@ -260,23 +217,24 @@ const memeticOptions = {
           left++;
           right--;
         }
-        neighbors.push({ genome: newRoute, fitness: 0 });
+        neighbors.push(newRoute);
       }
     }
-    
-    return neighbors.slice(0, 10); // Limit to 10 neighbors for efficiency
+    return neighbors.slice(0, 10);
   },
-  
   localSearchOptions: {
     maxIterations: 20,
     maximize: true
   }
 };
 
-// Run the memetic algorithm
-const bestSolution = memeticAlgorithm(memeticOptions);
-console.log('Best route:', bestSolution.genome);
-console.log('Fitness:', bestSolution.fitness);
+// Run the memetic algorithm as a class
+const memetic = new MemeticAlgorithm(memeticOptions);
+memetic.initializePopulation().then(async () => {
+  const bestSolution = await memetic.evolve();
+  console.log('Best route:', bestSolution.genome);
+  console.log('Fitness:', bestSolution.fitness);
+});
 ```
 
 ### Local Search
@@ -368,31 +326,16 @@ class GeneticAlgorithm<T> implements EvolutionaryAlgorithm<T> {
 
 ### MemeticAlgorithm
 
-The function for creating and running memetic algorithms that combine genetic algorithms with local search:
+A class for creating and running memetic algorithms that combine genetic algorithms with local search:
 
 ```typescript
-interface MemeticOptions {
-  populationSize: number;
-  generations: number;
-  crossoverRate: number;
-  mutationRate: number;
-  localSearchRate: number;  // Probability of applying local search to an individual
-  initialize: () => Individual;  // Function to create a random individual
-  evaluate: (individual: Individual) => number;  // Fitness evaluation
-  select: (population: Individual[]) => [Individual, Individual];  // Selection method
-  crossover: (parent1: Individual, parent2: Individual) => Individual;  // Crossover method
-  mutate: (individual: Individual) => Individual;  // Mutation method
-  
-  // Local search configuration
-  objectiveFunction: ObjectiveFunction<Individual>;
-  neighborhoodFunction: NeighborhoodFunction<Individual>;
-  localSearchOptions?: {
-    maxIterations?: number;
-    maximize?: boolean;
-  };
+class MemeticAlgorithm<T> {
+  constructor(config: MemeticOptions<T>);
+  initializePopulation(): Promise<void>;
+  evolve(): Promise<Individual<T>>;
+  getBestIndividual(): Individual<T>;
+  getPopulation(): Individual<T>[];
 }
-
-function memeticAlgorithm(options: MemeticOptions): Individual;
 ```
 
 ### LocalSearch
