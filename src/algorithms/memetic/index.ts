@@ -1,82 +1,76 @@
 import { LocalSearch, NeighborhoodFunction, ObjectiveFunction } from '../../search/localSearch';
 
-export type Individual = {
-    genome: any; // Replace 'any' with your genome type
+export interface Individual<T> {
+    genome: T;
     fitness: number;
-};
+}
 
-export interface MemeticOptions {
+export interface MemeticOptions<T> {
     populationSize: number;
     generations: number;
     crossoverRate: number;
     mutationRate: number;
     localSearchRate: number;
-    initialize: () => Individual | Promise<Individual>;
-    evaluate: (individual: Individual) => number | Promise<number>;
-    select: (population: Individual[]) => [Individual, Individual];
-    crossover: (parent1: Individual, parent2: Individual) => Individual;
-    mutate: (individual: Individual) => Individual;
+    initialize: () => T | Promise<T>;
+    evaluate: (individual: T) => number | Promise<number>;
+    select: (population: Individual<T>[]) => [Individual<T>, Individual<T>];
+    crossover: (parent1: T, parent2: T) => T;
+    mutate: (individual: T) => T;
 
     // Local search configuration using the general LocalSearch class
-    objectiveFunction: ObjectiveFunction<Individual>;
-    neighborhoodFunction: NeighborhoodFunction<Individual>;
+    objectiveFunction: ObjectiveFunction<T>;
+    neighborhoodFunction: NeighborhoodFunction<T>;
     localSearchOptions?: {
         maxIterations?: number;
         maximize?: boolean;
-        costFunction?: (solution: Individual) => number | Promise<number>;
+        costFunction?: (solution: T) => number | Promise<number>;
         maximizeCost?: boolean;
     };
 }
 
-export async function memeticAlgorithm(options: MemeticOptions): Promise<Individual> {
-    let population: Individual[] = [];
+export async function memeticAlgorithm<T>(options: MemeticOptions<T>): Promise<Individual<T>> {
+    let population: Individual<T>[] = [];
     for (let i = 0; i < options.populationSize; i++) {
-        const ind = await options.initialize();
-        ind.fitness = await options.evaluate(ind);
-        population.push(ind);
-    }    // Create a LocalSearch instance
-    const localSearcher = new LocalSearch<Individual>();
-
+        const genome = await options.initialize();
+        const fitness = await options.evaluate(genome);
+        population.push({ genome, fitness });
+    }
+    const localSearcher = new LocalSearch<T>();
     for (let gen = 0; gen < options.generations; gen++) {
-        const newPopulation: Individual[] = [];
-
+        const newPopulation: Individual<T>[] = [];
         while (newPopulation.length < options.populationSize) {
             // Selection
             const [parent1, parent2] = options.select(population);
-
             // Crossover
-            let offspring =
+            let offspringGenome =
                 Math.random() < options.crossoverRate
-                    ? options.crossover(parent1, parent2)
-                    : { ...parent1 };
-
+                    ? options.crossover(parent1.genome, parent2.genome)
+                    : parent1.genome;
             // Mutation
             if (Math.random() < options.mutationRate) {
-                offspring = options.mutate(offspring);
+                offspringGenome = options.mutate(offspringGenome);
             }
-
             // Local Search
             if (Math.random() < options.localSearchRate) {
-                // Use the general LocalSearch approach
                 const result = await localSearcher.search(
-                    offspring,
+                    offspringGenome,
                     options.objectiveFunction,
                     options.neighborhoodFunction,
                     options.localSearchOptions
                 );
-                offspring = result.solution;
-                offspring.fitness = result.fitness;
+                offspringGenome = result.solution;
             }
-
-            offspring.fitness = await options.evaluate(offspring);
-            newPopulation.push(offspring);
+            const offspringFitness = await options.evaluate(offspringGenome);
+            newPopulation.push({ genome: offspringGenome, fitness: offspringFitness });
         }
-
         population = newPopulation;
     }
-
     // Return the best individual
-    return population.reduce((best, ind) =>
-        ind.fitness > best.fitness ? ind : best
-    );
+    let best = population[0];
+    for (let i = 1; i < population.length; i++) {
+        if (population[i].fitness > best.fitness) {
+            best = population[i];
+        }
+    }
+    return best;
 }
