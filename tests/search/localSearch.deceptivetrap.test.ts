@@ -1,4 +1,5 @@
-import { LocalSearch, ObjectiveFunction, NeighborhoodFunction } from '../../src/search/localSearch';
+import { LocalSearch } from '../../src/search/localSearch';
+import { ObjectiveFunction, NeighborhoodFunction } from '../../src/search/types';
 
 describe('LocalSearch - Deceptive Trap Function', () => {
     it('should solve the Deceptive Trap problem (for k=5)', async () => {

@@ -1,5 +1,5 @@
 import { MemeticAlgorithm, Individual } from '../../src/algorithms/memetic';
-import { NeighborhoodFunction, ObjectiveFunction } from '../../src/search/localSearch';
+import { NeighborhoodFunction, ObjectiveFunction } from '../../src/search/types';
 
 describe('MemeticAlgorithm', () => {
     it('should return a solution for a simple numerical problem', async () => {

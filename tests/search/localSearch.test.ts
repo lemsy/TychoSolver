@@ -1,4 +1,5 @@
-import { LocalSearch, ObjectiveFunction, NeighborhoodFunction } from '../../src/search/localSearch';
+import { LocalSearch } from '../../src/search/localSearch';
+import { ObjectiveFunction, NeighborhoodFunction } from '../../src/search/types';
 
 describe('LocalSearch', () => {
   // Test case: Simple 1D optimization problem (finding maximum)

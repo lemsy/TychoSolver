@@ -1,4 +1,5 @@
-import { LocalSearch, ObjectiveFunction, NeighborhoodFunction, CostFunction } from '../../src/search/localSearch';
+import { LocalSearch } from '../../src/search/localSearch';
+import { ObjectiveFunction, NeighborhoodFunction, CostFunction } from '../../src/search/types';
 
 describe('LocalSearch - N-Queens with cost function tie-breaking', () => {
     // N-Queens: place N queens on an N×N board so that no two queens threaten each other

@@ -1,4 +1,5 @@
-import { LocalSearch, NeighborhoodFunction, ObjectiveFunction } from '../../search/localSearch';
+import { LocalSearch } from '../../search/localSearch';
+import { NeighborhoodFunction, ObjectiveFunction } from '../../search/types';
 
 export interface Individual<T> {
     genome: T;

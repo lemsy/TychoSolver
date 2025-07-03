@@ -1,4 +1,5 @@
-import { LocalSearch, ObjectiveFunction, NeighborhoodFunction } from '../../src/search/localSearch';
+import { LocalSearch } from '../../src/search/localSearch';
+import { ObjectiveFunction, NeighborhoodFunction } from '../../src/search/types';
 
 describe('LocalSearch - Traveling Salesman Problem (TSP) with onClimb notification', () => {
     // Simple TSP instance: 4 cities in a square

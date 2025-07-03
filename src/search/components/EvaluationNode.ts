@@ -1,0 +1,23 @@
+import { NeighborhoodNode } from './NeighborhoodNode';
+import { ObjectiveFunction, NeighborhoodFunction, LocalSearchOptions } from '../types';
+
+export const EvaluationNode = async ({
+    solution,
+    objectiveFunction,
+    neighborhoodFunction,
+    options
+}: {
+    solution: any;
+    objectiveFunction: ObjectiveFunction<any>;
+    neighborhoodFunction: NeighborhoodFunction<any>;
+    options: LocalSearchOptions<any>;
+}) => {
+    const fitness = await objectiveFunction(solution);
+    return NeighborhoodNode({
+        solution,
+        fitness,
+        neighborhoodFunction,
+        objectiveFunction,
+        options
+    });
+};
