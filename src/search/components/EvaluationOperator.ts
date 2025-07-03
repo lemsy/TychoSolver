@@ -1,23 +1,10 @@
-import { NeighborhoodOperator } from './NeighborhoodOperator';
-import { ObjectiveFunction, NeighborhoodFunction, LocalSearchOptions } from '../types';
+import { EvaluationOperator as IEvaluationOperator } from '../../core/operators/EvaluationOperator';
+import { ObjectiveFunction } from '../types';
 
-export const EvaluationOperator = async ({
-    solution,
-    objectiveFunction,
-    neighborhoodFunction,
-    options
-}: {
-    solution: any;
-    objectiveFunction: ObjectiveFunction<any>;
-    neighborhoodFunction: NeighborhoodFunction<any>;
-    options: LocalSearchOptions<any>;
-}) => {
-    const fitness = await objectiveFunction(solution);
-    return NeighborhoodOperator({
-        solution,
-        fitness,
-        neighborhoodFunction,
-        objectiveFunction,
-        options
-    });
-};
+export class LSEvaluationOperator implements IEvaluationOperator<any> {
+    constructor(private objectiveFunction: ObjectiveFunction<any>) { }
+
+    async evaluate(solution: any): Promise<number> {
+        return this.objectiveFunction(solution);
+    }
+}

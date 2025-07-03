@@ -1,5 +1,5 @@
-import { NeighborhoodOperator } from './NeighborhoodOperator';
-import { TerminationOperator } from './TerminationOperator';
+import { EvaluationOperator } from '../../core/operators/EvaluationOperator';
+import { TerminationOperator as ITerminationOperator } from '../../core/operators/TerminationOperator';
 import { ObjectiveFunction, NeighborhoodFunction, LocalSearchOptions, LocalSearchResult } from '../types';
 
 export const SearchLoopOperator = async ({
@@ -8,7 +8,10 @@ export const SearchLoopOperator = async ({
     objectiveFunction,
     neighborhoodFunction,
     options,
-    iterations = 0
+    iterations = 0,
+    evaluationOperator,
+    neighborhoodOperator,
+    terminationOperator
 }: {
     currentSolution: any;
     currentFitness: number;
@@ -16,35 +19,32 @@ export const SearchLoopOperator = async ({
     neighborhoodFunction: NeighborhoodFunction<any>;
     options: LocalSearchOptions<any>;
     iterations?: number;
+    evaluationOperator: EvaluationOperator<any>;
+    neighborhoodOperator: (args: any) => Promise<any>;
+    terminationOperator: ITerminationOperator<any>;
 }): Promise<LocalSearchResult<any>> => {
-    // Check for termination
-    const termResult = TerminationOperator({
-        solution: currentSolution,
-        fitness: currentFitness,
-        options,
-        iterations
-    });
-    if (termResult.terminated) {
-        return {
-            solution: termResult.solution,
-            fitness: termResult.fitness,
-            iterations: termResult.iterations
-        };
-    }
+    // Evaluate current solution (optional, if needed)
+    const fitness = await evaluationOperator.evaluate(currentSolution);
     // Perform one search step
-    const next = await NeighborhoodOperator({
+    const next = await neighborhoodOperator({
         solution: currentSolution,
-        fitness: currentFitness,
+        fitness,
         neighborhoodFunction,
         objectiveFunction,
         options,
         iterations
     });
-    // If no improvement, return current
-    if (!next || next.solution === currentSolution) {
+    // Check for termination after move
+    const terminatedAfterMove = terminationOperator.shouldTerminate({
+        solution: next.solution,
+        fitness: next.fitness,
+        options,
+        iterations
+    });
+    if (!next || next.solution === currentSolution || terminatedAfterMove) {
         return {
-            solution: currentSolution,
-            fitness: currentFitness,
+            solution: next ? next.solution : currentSolution,
+            fitness: next ? next.fitness : fitness,
             iterations
         };
     }
@@ -55,6 +55,9 @@ export const SearchLoopOperator = async ({
         objectiveFunction,
         neighborhoodFunction,
         options,
-        iterations: iterations + 1
+        iterations: iterations + 1,
+        evaluationOperator,
+        neighborhoodOperator,
+        terminationOperator
     });
 };

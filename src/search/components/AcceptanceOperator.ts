@@ -1,4 +1,3 @@
-import { TerminationOperator } from './TerminationOperator';
 import { LocalSearchOptions } from '../types';
 
 export const AcceptanceOperator = async ({
@@ -29,11 +28,10 @@ export const AcceptanceOperator = async ({
     if (accepted && options.onClimb) {
         await options.onClimb(nextSolution, nextFitness, iterations);
     }
-    // Pass through to TerminationOperator
-    return TerminationOperator({
+    // Return updated solution, fitness, and iterations
+    return {
         solution: nextSolution,
         fitness: nextFitness,
-        options,
         iterations
-    });
+    };
 };
