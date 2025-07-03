@@ -11,7 +11,9 @@
       "node"
     ],
     "outDir": "dist",
-    "declaration": true
+    "declaration": true,
+    "jsx": "react",
+    "jsxFactory": "createNode"
   },
   "include": [
     "src/**/*"
