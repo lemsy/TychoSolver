@@ -23,7 +23,7 @@ export interface EvolutionaryConfig {
  * Interface for evolutionary algorithm implementations
  */
 export interface EvolutionaryAlgorithm<T> {
-  evolve(generations?: number): T;
+  evolve(generations?: number): Promise<T>;
   getBestSolution(): T;
   getBestFitness(): number;
   getPopulation(): T[];
