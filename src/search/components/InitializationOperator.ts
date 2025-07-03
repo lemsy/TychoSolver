@@ -1,6 +1,6 @@
 import { ObjectiveFunction, NeighborhoodFunction, LocalSearchOptions } from '../types';
 
-export const InitializationNode = async ({
+export const InitializationOperator = async ({
     initialSolution,
     randomInitializer,
     objectiveFunction,
@@ -16,7 +16,7 @@ export const InitializationNode = async ({
     const solution = randomInitializer ? randomInitializer() : initialSolution;
     const fitness = await objectiveFunction(solution);
     // Start the search loop
-    const { solution: finalSolution, fitness: finalFitness, iterations } = await import('./SearchLoopNode').then(m => m.SearchLoopNode({
+    const { solution: finalSolution, fitness: finalFitness, iterations } = await import('./SearchLoopOperator').then(m => m.SearchLoopOperator({
         currentSolution: solution,
         currentFitness: fitness,
         objectiveFunction,

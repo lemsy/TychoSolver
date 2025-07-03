@@ -1,7 +1,7 @@
-import { InitializationNode } from './InitializationNode';
+import { InitializationOperator } from './InitializationOperator';
 import { LocalSearchOptions, ObjectiveFunction, NeighborhoodFunction } from '../types';
 
-export const RandomRestartsNode = async ({
+export const RandomRestartsOperator = async ({
     initialSolution,
     objectiveFunction,
     neighborhoodFunction,
@@ -15,7 +15,7 @@ export const RandomRestartsNode = async ({
     const { randomRestarts = 1, randomInitializer } = options;
     let bestResult: any = null;
     for (let restart = 0; restart < randomRestarts; restart++) {
-        const result = await InitializationNode({
+        const result = await InitializationOperator({
             initialSolution: restart === 0 ? initialSolution : (randomInitializer ? randomInitializer() : initialSolution),
             randomInitializer: undefined,
             objectiveFunction,

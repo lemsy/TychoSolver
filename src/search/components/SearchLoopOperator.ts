@@ -1,8 +1,8 @@
-import { NeighborhoodNode } from './NeighborhoodNode';
-import { TerminationNode } from './TerminationNode';
+import { NeighborhoodOperator } from './NeighborhoodOperator';
+import { TerminationOperator } from './TerminationOperator';
 import { ObjectiveFunction, NeighborhoodFunction, LocalSearchOptions, LocalSearchResult } from '../types';
 
-export const SearchLoopNode = async ({
+export const SearchLoopOperator = async ({
     currentSolution,
     currentFitness,
     objectiveFunction,
@@ -18,7 +18,7 @@ export const SearchLoopNode = async ({
     iterations?: number;
 }): Promise<LocalSearchResult<any>> => {
     // Check for termination
-    const termResult = TerminationNode({
+    const termResult = TerminationOperator({
         solution: currentSolution,
         fitness: currentFitness,
         options,
@@ -32,7 +32,7 @@ export const SearchLoopNode = async ({
         };
     }
     // Perform one search step
-    const next = await NeighborhoodNode({
+    const next = await NeighborhoodOperator({
         solution: currentSolution,
         fitness: currentFitness,
         neighborhoodFunction,
@@ -49,7 +49,7 @@ export const SearchLoopNode = async ({
         };
     }
     // Continue search with incremented iterations
-    return await SearchLoopNode({
+    return await SearchLoopOperator({
         currentSolution: next.solution,
         currentFitness: next.fitness,
         objectiveFunction,

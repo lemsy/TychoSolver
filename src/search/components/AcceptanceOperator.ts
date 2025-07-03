@@ -1,7 +1,7 @@
-import { TerminationNode } from './TerminationNode';
+import { TerminationOperator } from './TerminationOperator';
 import { LocalSearchOptions } from '../types';
 
-export const AcceptanceNode = async ({
+export const AcceptanceOperator = async ({
     candidateSolution,
     candidateFitness,
     currentSolution,
@@ -29,8 +29,8 @@ export const AcceptanceNode = async ({
     if (accepted && options.onClimb) {
         await options.onClimb(nextSolution, nextFitness, iterations);
     }
-    // Pass through to TerminationNode
-    return TerminationNode({
+    // Pass through to TerminationOperator
+    return TerminationOperator({
         solution: nextSolution,
         fitness: nextFitness,
         options,

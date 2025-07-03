@@ -1,7 +1,7 @@
-import { AcceptanceNode } from './AcceptanceNode';
+import { AcceptanceOperator } from './AcceptanceOperator';
 import { ObjectiveFunction, LocalSearchOptions } from '../types';
 
-export const MoveSelectionNode = async ({
+export const MoveSelectionOperator = async ({
     neighbors,
     currentSolution,
     currentFitness,
@@ -40,7 +40,7 @@ export const MoveSelectionNode = async ({
             }
         }
     }
-    return AcceptanceNode({
+    return AcceptanceOperator({
         candidateSolution: selectedNeighbor,
         candidateFitness: selectedFitness,
         currentSolution,

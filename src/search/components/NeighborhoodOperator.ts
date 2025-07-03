@@ -1,7 +1,7 @@
-import { MoveSelectionNode } from './MoveSelectionNode';
+import { MoveSelectionOperator } from './MoveSelectionOperator';
 import { NeighborhoodFunction, ObjectiveFunction, LocalSearchOptions } from '../types';
 
-export const NeighborhoodNode = async ({
+export const NeighborhoodOperator = async ({
     solution,
     fitness,
     neighborhoodFunction,
@@ -19,7 +19,7 @@ export const NeighborhoodNode = async ({
     const neighbors = options.dynamicNeighborhoodFunction
         ? options.dynamicNeighborhoodFunction(solution)
         : neighborhoodFunction(solution);
-    return await MoveSelectionNode({
+    return await MoveSelectionOperator({
         neighbors,
         currentSolution: solution,
         currentFitness: fitness,

@@ -1,4 +1,4 @@
-export const TieBreakerNode = ({
+export const TieBreakerOperator = ({
     currentSolution,
     neighbor,
     currentCost,

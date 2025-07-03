@@ -1,6 +1,6 @@
 import { NeighborhoodFunction } from '../types';
 
-export const NeighborhoodSelectorNode = ({
+export const NeighborhoodSelectorOperator = ({
     solution,
     neighborhoodFunction,
     dynamicNeighborhoodFunction,

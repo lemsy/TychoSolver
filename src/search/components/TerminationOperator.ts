@@ -1,6 +1,6 @@
 import { LocalSearchOptions } from '../types';
 
-export const TerminationNode = ({
+export const TerminationOperator = ({
     solution,
     fitness,
     options,

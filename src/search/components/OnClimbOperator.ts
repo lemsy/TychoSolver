@@ -1,4 +1,4 @@
-export const OnClimbNode = async ({
+export const OnClimbOperator = async ({
     solution,
     fitness,
     iteration,
