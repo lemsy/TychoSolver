@@ -38,3 +38,6 @@ coverage/
 
 # GitHub Actions local files
 .github/.env
+
+# Ignore output images from Sudoku demo
+demos/output/

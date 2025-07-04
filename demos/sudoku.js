@@ -9,6 +9,9 @@ const { SelectionOperatorImpl } = require('../dist/algorithms/genetic/components
 const { CrossoverOperatorImpl } = require('../dist/algorithms/genetic/components/CrossoverOperator');
 const { MutationOperatorImpl } = require('../dist/algorithms/genetic/components/MutationOperator');
 const { MemeticInitializationOperator } = require('../dist/algorithms/memetic/components/MemeticInitializationOperator');
+const fs = require('fs');
+const path = require('path');
+const { createCanvas } = require('canvas');
 
 // Example 9x9 Sudoku puzzle (0 = empty cell)
 const initialGrid = [
@@ -99,8 +102,73 @@ const selectionOperator = new SelectionOperatorImpl();
 const crossoverOperator = new CrossoverOperatorImpl();
 const mutationOperator = new MutationOperatorImpl(row => row.map(cell => Math.floor(Math.random() * SIZE) + 1));
 
+// Ensure output directory exists
+const outputDir = path.join(__dirname, 'output');
+if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
+}
+
+function drawSudokuGrid(grid, filename, title = '') {
+    const cellSize = 50;
+    const gridSize = SIZE * cellSize;
+    const canvas = createCanvas(gridSize, gridSize + 40);
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, gridSize, gridSize + 40);
+
+    // Title
+    ctx.fillStyle = '#222';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(title, gridSize / 2, 30);
+
+    // Draw cells
+    ctx.font = 'bold 28px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < SIZE; i++) {
+        for (let j = 0; j < SIZE; j++) {
+            const x = j * cellSize;
+            const y = i * cellSize + 40;
+            ctx.strokeStyle = '#bbb';
+            ctx.strokeRect(x, y, cellSize, cellSize);
+            if (initialGrid[i][j] !== 0) {
+                ctx.fillStyle = '#1976d2'; // Clue color
+            } else {
+                ctx.fillStyle = '#222';
+            }
+            ctx.fillText(grid[i][j] || '', x + cellSize / 2, y + cellSize / 2);
+        }
+    }
+    // Draw bold lines for subgrids
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    for (let i = 0; i <= SIZE; i++) {
+        if (i % SUBGRID === 0) {
+            ctx.beginPath();
+            ctx.moveTo(0, i * cellSize + 40);
+            ctx.lineTo(gridSize, i * cellSize + 40);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(i * cellSize, 40);
+            ctx.lineTo(i * cellSize, gridSize + 40);
+            ctx.stroke();
+        }
+    }
+    ctx.lineWidth = 1;
+    // Save image
+    const out = fs.createWriteStream(path.join(outputDir, filename));
+    const stream = canvas.createPNGStream();
+    stream.pipe(out);
+    out.on('finish', () => console.log(`Saved image: ${filename}`));
+}
+
 // Configure and run the algorithm
 async function runSudokuDemo() {
+    // Save initial grid image
+    drawSudokuGrid(initialGrid, 'sudoku_initial.png', 'Initial Sudoku');
     const algo = new MemeticAlgorithm({
         populationSize: 100,
         generations: 100,
@@ -121,6 +189,8 @@ async function runSudokuDemo() {
         }
     });
     const result = await algo.evolve();
+    // Save solved grid image
+    drawSudokuGrid(result.genome, 'sudoku_solved.png', 'Solved Sudoku');
     console.log('Solved Sudoku:');
     printSudoku(result.genome);
     console.log('Fitness:', sudokuFitness(result.genome));
@@ -133,3 +203,5 @@ function printSudoku(grid) {
 }
 
 runSudokuDemo();
+
+// Note: To use this feature, install canvas with: npm install canvas
