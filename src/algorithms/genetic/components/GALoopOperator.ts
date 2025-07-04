@@ -17,7 +17,8 @@ import { ReplacementOperatorImpl } from './ReplacementOperator';
 import { ElitismOperatorImpl } from './ElitismOperator';
 
 interface GALoopOperatorConfig<T> {
-    population: T[];
+    population?: T[]; // Now optional, can be created by InitializationOperator
+    initializationOperator?: InitializationOperator<T>;
     evaluationOperator?: EvaluationOperator<T>;
     selectionOperator?: SelectionOperator<T>;
     crossoverOperator?: CrossoverOperator<T>;
@@ -29,10 +30,12 @@ interface GALoopOperatorConfig<T> {
     maxGenerations: number;
     eliteCount?: number;
     fitnessLimit?: number;
+    populationSize?: number; // For initialization
 }
 
 export const GALoopOperator = async <T>({
     population,
+    initializationOperator,
     evaluationOperator,
     selectionOperator,
     crossoverOperator,
@@ -43,18 +46,21 @@ export const GALoopOperator = async <T>({
     fitnessFunction,
     maxGenerations,
     eliteCount = 0,
-    fitnessLimit
+    fitnessLimit,
+    populationSize = 100 // default size if not provided
 }: GALoopOperatorConfig<T>): Promise<{ bestSolution: T; bestFitness: number; population: T[]; generation: number }> => {
-    let pop = population;
+    // --- InitializationOperator creates the population if not provided ---
+    const initOp = initializationOperator || new GAInitializationOperator<T>();
+    let pop: T[] = population ? population : (await (initOp.initialize ? initOp.initialize(populationSize) : [])) as T[];
+    if (!pop || pop.length === 0) throw new Error('Population could not be initialized.');
     let bestSolution: T = pop[0];
     let bestFitness = -Infinity;
     let generation = 0;
 
-    // Provide sensible defaults if any operator is missing
-    // Helper to check if fitnessFunction is synchronous
+    // --- EvaluationOperator ---
     const isSyncFitness = (fn: any) => {
         try {
-            const res = fn(population[0]);
+            const res = fn(pop[0]);
             return !(res instanceof Promise);
         } catch {
             return true;
@@ -66,12 +72,19 @@ export const GALoopOperator = async <T>({
     } else if (isSyncFitness(fitnessFunction)) {
         evalOp = new GAEvaluationOperator<T>(fitnessFunction as (ind: T) => number);
     } else {
-        // fallback: async-compatible evaluation operator for single individual
-        evalOp = {
-            evaluate: (solution: T) => fitnessFunction(solution)
-        };
+        evalOp = { evaluate: (solution: T) => fitnessFunction(solution) };
     }
+
+    // --- ElitismOperator ---
+    const elitOp = elitismOperator || (new ElitismOperatorImpl<T>() as ElitismOperator<T>);
+
+    // --- ReplacementOperator (can depend on ElitismOperator) ---
+    const replOp = replacementOperator || (new ReplacementOperatorImpl<T>() as ReplacementOperator<T>);
+
+    // --- SelectionOperator ---
     const selectOp = selectionOperator || (new SelectionOperatorImpl<T>() as SelectionOperator<T>);
+
+    // --- CrossoverOperator ---
     let crossOp: CrossoverOperator<T>;
     if (crossoverOperator) {
         crossOp = crossoverOperator;
@@ -82,6 +95,8 @@ export const GALoopOperator = async <T>({
             throw new Error('No default crossover operator for this individual type. Please provide one.');
         }
     }
+
+    // --- MutationOperator ---
     let mutOp: MutationOperator<T>;
     if (mutationOperator) {
         mutOp = mutationOperator;
@@ -92,8 +107,8 @@ export const GALoopOperator = async <T>({
             throw new Error('No default mutation operator for this individual type. Please provide one.');
         }
     }
-    const replOp = replacementOperator || (new ReplacementOperatorImpl<T>() as ReplacementOperator<T>);
-    const elitOp = elitismOperator || (new ElitismOperatorImpl<T>() as ElitismOperator<T>);
+
+    // --- TerminationOperator ---
     const termOp = terminationOperator || (new GATerminationOperator<T>() as TerminationOperator<T>);
 
     while (generation < maxGenerations && !termOp.shouldTerminate(pop)) {
@@ -116,7 +131,7 @@ export const GALoopOperator = async <T>({
         // Elitism
         const elites = eliteCount > 0 ? elitOp.apply(pop, fitnesses, eliteCount) : [];
 
-        // Replacement
+        // Replacement (now can use elitism if needed)
         pop = replOp.replace(pop, offspring, fitnesses);
 
         // Insert elites
