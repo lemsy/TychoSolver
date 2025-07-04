@@ -53,9 +53,6 @@ export const GALoopOperator = async <T>({
     const initOp = initializationOperator || new GAInitializationOperator<T>();
     let pop: T[] = population ? population : (await (initOp.initialize ? initOp.initialize(populationSize) : [])) as T[];
     if (!pop || pop.length === 0) throw new Error('Population could not be initialized.');
-    let bestSolution: T = pop[0];
-    let bestFitness = -Infinity;
-    let generation = 0;
 
     // --- EvaluationOperator ---
     const isSyncFitness = (fn: any) => {
@@ -74,6 +71,12 @@ export const GALoopOperator = async <T>({
     } else {
         evalOp = { evaluate: (solution: T) => fitnessFunction(solution) };
     }
+
+    // --- Evaluate initial population ---
+    let fitnesses: number[] = await Promise.all(pop.map(ind => evalOp.evaluate(ind)));
+    let bestSolution: T = pop[0];
+    let bestFitness = Math.max(...fitnesses);
+    let generation = 0;
 
     // --- ElitismOperator ---
     const elitOp = elitismOperator || (new ElitismOperatorImpl<T>() as ElitismOperator<T>);
@@ -115,10 +118,8 @@ export const GALoopOperator = async <T>({
     // --- TerminationOperator ---
     const termOp = terminationOperator || (new GATerminationOperator<T>() as TerminationOperator<T>);
 
+    // --- Main Evolutionary Loop ---
     while (generation < maxGenerations && !termOp.shouldTerminate(pop)) {
-        // Evaluate fitnesses (await if async)
-        const fitnesses: number[] = await Promise.all(pop.map(ind => evalOp.evaluate(ind)));
-
         // Selection
         const parents = selectOp.select(pop, fitnesses, pop.length);
 
@@ -134,6 +135,9 @@ export const GALoopOperator = async <T>({
 
         // Replacement (now handles elitism internally)
         pop = await replOp.replace(pop, offspring, fitnesses);
+
+        // Evaluate new population
+        fitnesses = await Promise.all(pop.map(ind => evalOp.evaluate(ind)));
 
         // Update best
         const genBestIdx = fitnesses.indexOf(Math.max(...fitnesses));

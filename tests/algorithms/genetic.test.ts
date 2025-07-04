@@ -9,9 +9,10 @@ describe('Genetic Algorithm', () => {
       populationSize: 5,
       maxGenerations: 10,
       mutationRate: 0.1,
-      crossoverRate: 0.7
+      crossoverRate: 0.7,
+      initializationOperator: { initialize: () => initialPopulation }
     };
-    const ga = new GeneticAlgorithm(initialPopulation, fitnessFunction, config);
+    const ga = new GeneticAlgorithm(fitnessFunction, config);
     expect(ga.getPopulation()).toEqual(initialPopulation);
     expect(ga.getGeneration()).toBe(0);
     expect(ga.getBestFitness()).toBe(5);
@@ -20,32 +21,30 @@ describe('Genetic Algorithm', () => {
 });
 
 describe('Genetic Algorithm edge cases', () => {
-  it('should handle empty population gracefully', () => {
+  it('should throw if initialization operator produces empty population', () => {
     const fitnessFunction = (x: number) => x;
     const config = {
       populationSize: 0,
       maxGenerations: 1,
       mutationRate: 0.1,
-      crossoverRate: 0.7
+      crossoverRate: 0.7,
+      initializationOperator: { initialize: () => [] }
     };
-    // The implementation does not throw, so check for empty population and undefined best
-    const ga = new GeneticAlgorithm([], fitnessFunction, config);
-    expect(ga.getPopulation().length).toBe(0);
-    expect(ga.getBestSolution()).toBeUndefined();
-    expect(ga.getBestFitness()).toBeUndefined();
+    expect(() => new GeneticAlgorithm(fitnessFunction, config)).toThrow();
   });
 
-  it('should not evolve if generations is zero', () => {
+  it('should not evolve if generations is zero', async () => {
     const initialPopulation = [1, 2, 3];
     const fitnessFunction = (x: number) => x;
     const config = {
       populationSize: 3,
       maxGenerations: 0,
       mutationRate: 0.1,
-      crossoverRate: 0.7
+      crossoverRate: 0.7,
+      initializationOperator: { initialize: () => initialPopulation }
     };
-    const ga = new GeneticAlgorithm(initialPopulation, fitnessFunction, config);
-    const best = ga.evolve(0);
+    const ga = new GeneticAlgorithm(fitnessFunction, config);
+    const best = await ga.evolve(0);
     expect(best).toBeDefined();
     expect(ga.getGeneration()).toBe(0);
   });
