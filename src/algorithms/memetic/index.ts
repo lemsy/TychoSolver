@@ -7,7 +7,6 @@ import { CrossoverOperator } from '../../core/operators/CrossoverOperator';
 import { MutationOperator } from '../../core/operators/MutationOperator';
 import { ReplacementOperator } from '../../core/operators/ReplacementOperator';
 import { TerminationOperator } from '../../core/operators/TerminationOperator';
-import { MemeticInitializationOperator } from './components/MemeticInitializationOperator';
 
 export interface Individual<T> {
     genome: T;
