@@ -57,7 +57,9 @@ export class GeneticAlgorithm<T> implements EvolutionaryAlgorithm<T> {
       eliteCount,
       fitnessLimit,
       initializationOperator: (this.config as any).initializationOperator,
-      evaluationOperator: (this.config as any).evaluationOperator
+      evaluationOperator: (this.config as any).evaluationOperator,
+      mutationOperator: (this.config as any).mutationOperator,
+      crossoverOperator: (this.config as any).crossoverOperator
     });
     this.population = result.population;
     this.bestSolution = result.bestSolution;
