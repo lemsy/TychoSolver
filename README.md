@@ -112,7 +112,7 @@ console.log('Fitness:', ga.getBestFitness());
 
 ### Memetic Algorithm
 
-Memetic algorithms combine global search (genetic algorithm) with local search to refine solutions:
+Memetic algorithms combine global search (genetic algorithm) with local search to refine solutions. You must provide custom operator functions (e.g., selection, crossover, mutation, evaluation, neighborhood) as part of the configuration:
 
 ```typescript
 import { MemeticAlgorithm } from 'tycho-solver';
@@ -195,15 +195,6 @@ const memeticOptions = {
     }
     [genomeCopy[idx1], genomeCopy[idx2]] = [genomeCopy[idx2], genomeCopy[idx1]];
     return genomeCopy;
-  },
-  objectiveFunction: (route) => {
-    let totalDistance = 0;
-    for (let i = 0; i < route.length; i++) {
-      const from = cities[route[i]];
-      const to = cities[(route[(i + 1) % route.length])];
-      totalDistance += distance(from, to);
-    }
-    return 1000 / totalDistance;
   },
   neighborhoodFunction: (route) => {
     const neighbors = [];
@@ -326,7 +317,7 @@ class GeneticAlgorithm<T> implements EvolutionaryAlgorithm<T> {
 
 ### MemeticAlgorithm
 
-A class for creating and running memetic algorithms that combine genetic algorithms with local search:
+A class for creating and running memetic algorithms that combine genetic algorithms with local search. You must provide all operator functions (see example above):
 
 ```typescript
 class MemeticAlgorithm<T> {
@@ -371,6 +362,60 @@ class LocalSearch<T> {
   ): LocalSearchResult<T>;
 }
 ```
+
+## Custom Functions and Operators
+
+### GeneticAlgorithm
+
+When using `GeneticAlgorithm`, you must provide the following:
+
+| Parameter/Operator | Signature | Description |
+|-------------------|-----------|-------------|
+| initialPopulation | `T[]` | Array of individuals to start the population |
+| fitnessFunction | `(individual: T) => number` | Computes the fitness of an individual |
+
+You may also provide these configuration options (see API for all):
+- `populationSize`: `number` (size of the population)
+- `maxGenerations`: `number` (number of generations to run)
+- `crossoverRate`: `number` (probability of crossover)
+- `mutationRate`: `number` (probability of mutation)
+- `elitism`: `number` (number of best individuals to keep)
+
+If your implementation allows custom selection, crossover, or mutation operators, document their signatures here as well.
+
+### MemeticAlgorithm
+
+When using `MemeticAlgorithm`, you must provide the following operator functions in the configuration object:
+
+| Operator              | Signature                                              | Description                                      |
+|-----------------------|-------------------------------------------------------|--------------------------------------------------|
+| initialize            | () => T                                               | Generates a random individual                    |
+| evaluate              | (individual: T) => number                             | Computes the fitness of an individual            |
+| select                | (population: Individual<T>[]) => [Individual<T>, Individual<T>] | Selects parents for crossover           |
+| crossover             | (parent1: T, parent2: T) => T                         | Combines two parents to produce an offspring     |
+| mutate                | (individual: T) => T                                  | Mutates an individual                            |
+| neighborhoodFunction  | (individual: T) => T[]                                | Generates neighbors for local search             |
+
+You may also provide:
+- `localSearchOptions`: `{ maxIterations?: number, maximize?: boolean }`
+- `localSearchRate`: `number` (probability to apply local search)
+
+See the example above for sample implementations of each operator.
+
+### LocalSearch
+
+When using `LocalSearch`, you must provide the following functions:
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| objectiveFunction | `(solution: T) => number` | Computes the objective value (fitness) of a solution |
+| neighborhoodFunction | `(solution: T) => T[]` | Generates neighboring solutions |
+
+You may also provide:
+- `maxIterations`: `number` (maximum number of iterations, default: 1000)
+- `maximize`: `boolean` (whether to maximize or minimize, default: true)
+
+See the examples above for sample implementations of each function.
 
 ## License
 
