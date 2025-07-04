@@ -78,8 +78,12 @@ export const GALoopOperator = async <T>({
     // --- ElitismOperator ---
     const elitOp = elitismOperator || (new ElitismOperatorImpl<T>() as ElitismOperator<T>);
 
-    // --- ReplacementOperator (can depend on ElitismOperator) ---
-    const replOp = replacementOperator || (new ReplacementOperatorImpl<T>() as ReplacementOperator<T>);
+    // --- ReplacementOperator (now handles elitism internally) ---
+    const replOp = replacementOperator || (new ReplacementOperatorImpl<T>({
+        elitismOperator: elitOp,
+        eliteCount,
+        fitnessFunction
+    }) as ReplacementOperator<T>);
 
     // --- SelectionOperator ---
     const selectOp = selectionOperator || (new SelectionOperatorImpl<T>() as SelectionOperator<T>);
@@ -128,20 +132,8 @@ export const GALoopOperator = async <T>({
             offspring.push(mutOp.mutate(child2));
         }
 
-        // Elitism
-        const elites = eliteCount > 0 ? elitOp.apply(pop, fitnesses, eliteCount) : [];
-
-        // Replacement (now can use elitism if needed)
-        pop = replOp.replace(pop, offspring, fitnesses);
-
-        // Insert elites
-        if (elites.length > 0) {
-            const popWithFitness = await Promise.all(pop.map(async (ind, idx) => ({ ind, fit: await fitnessFunction(ind), idx })));
-            popWithFitness.sort((a, b) => a.fit - b.fit); // ascending, worst first
-            for (let i = 0; i < elites.length; ++i) {
-                pop[popWithFitness[i].idx] = elites[i];
-            }
-        }
+        // Replacement (now handles elitism internally)
+        pop = await replOp.replace(pop, offspring, fitnesses);
 
         // Update best
         const genBestIdx = fitnesses.indexOf(Math.max(...fitnesses));
