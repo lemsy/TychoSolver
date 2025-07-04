@@ -1,21 +1,27 @@
 import { MemeticAlgorithm, Individual } from '../../src/algorithms/memetic';
 import { NeighborhoodFunction, ObjectiveFunction } from '../../src/search/types';
+import {
+    GAInitializationOperator
+} from '../../src/algorithms/genetic/components/InitializationOperator';
+import { GAEvaluationOperator } from '../../src/algorithms/genetic/components/EvaluationOperator';
+import { SelectionOperatorImpl } from '../../src/algorithms/genetic/components/SelectionOperator';
+import { CrossoverOperatorImpl } from '../../src/algorithms/genetic/components/CrossoverOperator';
+import { MutationOperatorImpl } from '../../src/algorithms/genetic/components/MutationOperator';
+import { MemeticInitializationOperator } from '../../src/algorithms/memetic/MemeticInitializationOperator';
 
 describe('MemeticAlgorithm', () => {
     it('should return a solution for a simple numerical problem', async () => {
         // Example problem: maximize f(x) = x^2 for x in [0, 10]
-        const fitness = async (x: number) => {
-            return x * x;
+        const fitness = (x: number) => x * x;
+        const individualFactory = () => Math.floor(Math.random() * 11);
+        const initializationOperator = new MemeticInitializationOperator<number>(individualFactory);
+        const evaluationOperator = new GAEvaluationOperator<number>(fitness);
+        const selectionOperator = new SelectionOperatorImpl<Individual<number>>();
+        const crossoverOperator = {
+            crossover: (a: number, b: number) => [Math.round((a + b) / 2), Math.round((a + b) / 2)] as [number, number]
         };
-
-        const createIndividual = async (): Promise<number> => {
-            return Math.floor(Math.random() * 11);
-        }
-        const mutate = (individual: number) => {
-            return Math.max(0, Math.min(10, individual + (Math.random() < 0.5 ? 1 : -1)));
-        };
-        const crossover = (a: number, b: number) => {
-            return Math.round((a + b) / 2);
+        const mutationOperator = {
+            mutate: (individual: number) => Math.max(0, Math.min(10, individual + (Math.random() < 0.5 ? 1 : -1)))
         };
 
         // Define neighborhood function for local search
@@ -40,14 +46,12 @@ describe('MemeticAlgorithm', () => {
             crossoverRate: 0.7,
             mutationRate: 0.1,
             localSearchRate: 0.3,
-            initialize: createIndividual,
-            evaluate: fitness,
-            select: (population: Individual<number>[]) => {
-                const sorted = [...population].sort((a, b) => b.fitness - a.fitness);
-                return [sorted[0], sorted[1]]; // Select top 2 individuals
-            },
-            mutate,
-            crossover,
+            initializationOperator,
+            evaluationOperator,
+            selectionOperator,
+            crossoverOperator,
+            mutationOperator,
+            individualFactory,
             objectiveFunction: fitness,
             neighborhoodFunction,
             localSearchOptions: {
@@ -70,14 +74,16 @@ describe('MemeticAlgorithm', () => {
         const GENOME_LENGTH = 20;
 
         // Create a random binary genome
-        const createRandomBinaryGenome = (): BinaryGenome => {
-            return Array.from({ length: GENOME_LENGTH }, () => Math.round(Math.random()));
-        };
-
-        // Count the number of 1s in the genome (objective function)
-        const countOnes: ObjectiveFunction<BinaryGenome> = async (genome: BinaryGenome) => {
-            return genome.reduce((sum, gene) => sum + gene, 0);
-        };
+        const individualFactory = () => Array.from({ length: GENOME_LENGTH }, () => Math.round(Math.random()));
+        // Ensure a new initializationOperator is created with the correct factory
+        const initializationOperator = new MemeticInitializationOperator<BinaryGenome>(individualFactory);
+        const countOnes = (genome: BinaryGenome) => genome.reduce((sum, gene) => sum + gene, 0);
+        const evaluationOperator = new GAEvaluationOperator<BinaryGenome>(countOnes);
+        const selectionOperator = new SelectionOperatorImpl<Individual<BinaryGenome>>();
+        const crossoverOperator = new CrossoverOperatorImpl<BinaryGenome>();
+        const mutationOperator = new MutationOperatorImpl<BinaryGenome>(
+            (gene) => 1 - gene
+        );
 
         // Generate neighborhood by flipping one bit at a time
         const flipOneBitNeighborhood: NeighborhoodFunction<BinaryGenome> = (genome: BinaryGenome) => {
@@ -98,35 +104,12 @@ describe('MemeticAlgorithm', () => {
             crossoverRate: 0.8,
             mutationRate: 0.1,
             localSearchRate: 0.2,
-            initialize: async () => createRandomBinaryGenome(),
-            evaluate: countOnes,
-            select: (population: Individual<BinaryGenome>[]) => {
-                const tournamentSize = 3;
-                const tournament = () => {
-                    const candidates = Array.from(
-                        { length: tournamentSize },
-                        () => population[Math.floor(Math.random() * population.length)]
-                    );
-                    return candidates.reduce((best, ind) =>
-                        best.fitness > ind.fitness ? best : ind
-                    );
-                };
-                return [tournament(), tournament()];
-            },
-            crossover: (parent1, parent2) => {
-                const point = Math.floor(Math.random() * parent1.length);
-                const childGenome = [
-                    ...parent1.slice(0, point),
-                    ...parent2.slice(point)
-                ];
-                return childGenome;
-            },
-            mutate: (genome) => {
-                const newGenome = [...genome];
-                const mutationPoint = Math.floor(Math.random() * newGenome.length);
-                newGenome[mutationPoint] = 1 - newGenome[mutationPoint]; // Flip the bit
-                return newGenome;
-            },
+            initializationOperator,
+            evaluationOperator,
+            selectionOperator,
+            crossoverOperator,
+            mutationOperator,
+            individualFactory,
             objectiveFunction: countOnes,
             neighborhoodFunction: flipOneBitNeighborhood,
             localSearchOptions: {
