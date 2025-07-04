@@ -1,4 +1,4 @@
-import { InitializationOperator } from '../../core/operators/InitializationOperator';
+import { InitializationOperator } from '../../../core/operators/InitializationOperator';
 
 // Per-individual initialization operator for memetic algorithm
 export class MemeticInitializationOperator<T> implements InitializationOperator<T> {

@@ -7,7 +7,7 @@ import { GAEvaluationOperator } from '../../src/algorithms/genetic/components/Ev
 import { SelectionOperatorImpl } from '../../src/algorithms/genetic/components/SelectionOperator';
 import { CrossoverOperatorImpl } from '../../src/algorithms/genetic/components/CrossoverOperator';
 import { MutationOperatorImpl } from '../../src/algorithms/genetic/components/MutationOperator';
-import { MemeticInitializationOperator } from '../../src/algorithms/memetic/MemeticInitializationOperator';
+import { MemeticInitializationOperator } from '../../src/algorithms/memetic/components/MemeticInitializationOperator';
 
 describe('MemeticAlgorithm', () => {
     it('should return a solution for a simple numerical problem', async () => {
