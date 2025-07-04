@@ -114,4 +114,99 @@ describe('MemeticAlgorithm - Sudoku Problem', () => {
         // The best possible fitness is SIZE*SIZE*3 = 48 (no conflicts)
         expect(sudokuFitness(result.genome)).toBeGreaterThanOrEqual(40); // Accept near-perfect
     });
+
+    it('should improve a partially filled 7x7 Sudoku grid', async () => {
+        // 7x7 Sudoku (0 = empty), using 7x7 Latin square as a proxy for Sudoku
+        const initialGrid = [
+            [1, 0, 0, 0, 0, 0, 7],
+            [0, 2, 0, 0, 0, 6, 0],
+            [0, 0, 3, 0, 5, 0, 0],
+            [0, 0, 0, 4, 0, 0, 0],
+            [0, 0, 5, 0, 3, 0, 0],
+            [0, 6, 0, 0, 0, 2, 0],
+            [7, 0, 0, 0, 0, 0, 1]
+        ];
+        const SIZE = 7;
+        const SUBGRID = 1; // No subgrids in 7x7, treat as Latin square
+        type SudokuGenome = number[][];
+
+        const copyGrid = (grid: SudokuGenome): SudokuGenome => grid.map(row => [...row]);
+
+        const sudokuIndividualFactory = (): SudokuGenome => {
+            const grid = copyGrid(initialGrid);
+            for (let i = 0; i < SIZE; i++) {
+                for (let j = 0; j < SIZE; j++) {
+                    if (grid[i][j] === 0) {
+                        grid[i][j] = Math.floor(Math.random() * SIZE) + 1;
+                    }
+                }
+            }
+            return grid;
+        };
+
+        const sudokuFitness = (grid: SudokuGenome): number => {
+            let score = 0;
+            // Rows
+            for (let i = 0; i < SIZE; i++) {
+                const seen = new Set();
+                for (let j = 0; j < SIZE; j++) seen.add(grid[i][j]);
+                score += seen.size;
+            }
+            // Columns
+            for (let j = 0; j < SIZE; j++) {
+                const seen = new Set();
+                for (let i = 0; i < SIZE; i++) seen.add(grid[i][j]);
+                score += seen.size;
+            }
+            return score;
+        };
+
+        const sudokuNeighborhood = (grid: SudokuGenome): SudokuGenome[] => {
+            const neighbors: SudokuGenome[] = [];
+            for (let i = 0; i < SIZE; i++) {
+                for (let j = 0; j < SIZE; j++) {
+                    if (initialGrid[i][j] === 0) {
+                        for (let v = 1; v <= SIZE; v++) {
+                            if (grid[i][j] !== v) {
+                                const neighbor = copyGrid(grid);
+                                neighbor[i][j] = v;
+                                neighbors.push(neighbor);
+                            }
+                        }
+                    }
+                }
+            }
+            return neighbors;
+        };
+
+        const initializationOperator = new MemeticInitializationOperator<SudokuGenome>(sudokuIndividualFactory);
+        const evaluationOperator = new GAEvaluationOperator<SudokuGenome>(sudokuFitness);
+        const selectionOperator = new SelectionOperatorImpl<Individual<SudokuGenome>>();
+        const crossoverOperator = new CrossoverOperatorImpl<SudokuGenome>();
+        const mutationOperator = new MutationOperatorImpl<SudokuGenome>((row) => row.map(cell => Math.floor(Math.random() * SIZE) + 1));
+
+        const algo = new MemeticAlgorithm<SudokuGenome>({
+            populationSize: 50,
+            generations: 50,
+            crossoverRate: 0.7,
+            mutationRate: 0.2,
+            localSearchRate: 0.3,
+            initializationOperator,
+            evaluationOperator,
+            selectionOperator,
+            crossoverOperator,
+            mutationOperator,
+            individualFactory: sudokuIndividualFactory,
+            objectiveFunction: sudokuFitness,
+            neighborhoodFunction: sudokuNeighborhood,
+            localSearchOptions: {
+                maxIterations: 5,
+                maximize: true
+            }
+        });
+
+        const result = await algo.evolve();
+        // The best possible fitness is SIZE*SIZE*2 = 98 (no conflicts)
+        expect(sudokuFitness(result.genome)).toBeGreaterThanOrEqual(85); // Accept near-perfect
+    });
 });
