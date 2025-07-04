@@ -1,12 +1,13 @@
 import { LocalSearch } from '../../search/localSearch';
-import { NeighborhoodFunction, ObjectiveFunction } from '../../search/types';
-import { InitializationOperator } from '../../core/operators/InitializationOperator';
-import { EvaluationOperator } from '../../core/operators/EvaluationOperator';
-import { SelectionOperator } from '../../core/operators/SelectionOperator';
-import { CrossoverOperator } from '../../core/operators/CrossoverOperator';
-import { MutationOperator } from '../../core/operators/MutationOperator';
-import { ReplacementOperator } from '../../core/operators/ReplacementOperator';
-import { TerminationOperator } from '../../core/operators/TerminationOperator';
+import type { NeighborhoodFunction, ObjectiveFunction } from '../../search/types';
+import type { InitializationOperator } from '../../core/operators/InitializationOperator';
+import type { EvaluationOperator } from '../../core/operators/EvaluationOperator';
+import type { SelectionOperator } from '../../core/operators/SelectionOperator';
+import type { CrossoverOperator } from '../../core/operators/CrossoverOperator';
+import type { MutationOperator } from '../../core/operators/MutationOperator';
+import type { ReplacementOperator } from '../../core/operators/ReplacementOperator';
+import type { TerminationOperator } from '../../core/operators/TerminationOperator';
+import { memeticLoop } from './components/LoopOperator';
 
 export interface Individual<T> {
     genome: T;
@@ -37,6 +38,38 @@ export interface MemeticOptions<T> {
     individualFactory: () => T;
 }
 
+// Helper: population initialization
+async function initializePopulation<T>(config: MemeticOptions<T>): Promise<Individual<T>[]> {
+    const population: Individual<T>[] = [];
+    for (let i = 0; i < config.populationSize; i++) {
+        const result = config.initializationOperator.initialize({
+            populationSize: 1,
+            individualFactory: config.individualFactory
+        });
+        const genome = Array.isArray(result) ? result[0] : result;
+        const resolvedGenome = genome instanceof Promise ? await genome : genome;
+        const fitness = await config.evaluationOperator.evaluate(resolvedGenome as T);
+        population.push({ genome: resolvedGenome as T, fitness });
+    }
+    return population;
+}
+
+// Helper: local search application
+async function applyLocalSearch<T>(
+    genome: T,
+    config: MemeticOptions<T>,
+    localSearcher: LocalSearch<T>
+): Promise<T> {
+    const { objectiveFunction, neighborhoodFunction, localSearchOptions } = config;
+    const result = await localSearcher.search(
+        genome,
+        objectiveFunction,
+        neighborhoodFunction,
+        localSearchOptions
+    );
+    return result.solution;
+}
+
 export class MemeticAlgorithm<T> {
     private population: Individual<T>[] = [];
     private config: MemeticOptions<T>;
@@ -49,18 +82,7 @@ export class MemeticAlgorithm<T> {
     }
 
     public async initializePopulation() {
-        this.population = [];
-        for (let i = 0; i < this.config.populationSize; i++) {
-            // Always use initializationOperator for per-individual initialization
-            const result = this.config.initializationOperator.initialize({
-                populationSize: 1,
-                individualFactory: this.config.individualFactory
-            });
-            const genome = Array.isArray(result) ? result[0] : result;
-            const resolvedGenome = genome instanceof Promise ? await genome : genome;
-            const fitness = await this.config.evaluationOperator.evaluate(resolvedGenome as T);
-            this.population.push({ genome: resolvedGenome as T, fitness });
-        }
+        this.population = await initializePopulation(this.config);
         this.updateBest();
     }
 
@@ -68,56 +90,17 @@ export class MemeticAlgorithm<T> {
         if (this.population.length === 0) {
             await this.initializePopulation();
         }
-        for (let gen = 0; gen < this.config.generations; gen++) {
-            const newPopulation: Individual<T>[] = [];
-            const fitnesses = this.population.map(ind => ind.fitness);
-            while (newPopulation.length < this.config.populationSize) {
-                // Selection
-                const parents = this.config.selectionOperator.select(this.population, fitnesses, 2);
-                const [parent1, parent2] = parents;
-                // Crossover
-                let offspringGenome =
-                    Math.random() < this.config.crossoverRate
-                        ? this.config.crossoverOperator.crossover(parent1.genome, parent2.genome)[0]
-                        : parent1.genome;
-                // Mutation
-                if (Math.random() < this.config.mutationRate) {
-                    offspringGenome = this.config.mutationOperator.mutate(offspringGenome);
-                }
-                // Local Search
-                if (Math.random() < this.config.localSearchRate) {
-                    const result = await this.localSearcher.search(
-                        offspringGenome,
-                        this.config.objectiveFunction,
-                        this.config.neighborhoodFunction,
-                        this.config.localSearchOptions
-                    );
-                    offspringGenome = result.solution;
-                }
-                const offspringFitness = await this.config.evaluationOperator.evaluate(offspringGenome);
-                newPopulation.push({ genome: offspringGenome, fitness: offspringFitness });
-            }
-            // Replacement (optional, fallback to generational)
-            if (this.config.replacementOperator) {
-                const replaced = await this.config.replacementOperator.replace(
-                    this.population,
-                    newPopulation,
-                    newPopulation.map(ind => ind.fitness)
-                );
-                this.population = replaced as Individual<T>[];
-            } else {
-                this.population = newPopulation;
-            }
-            this.updateBest();
-            // Termination (optional)
-            if (this.config.terminationOperator && this.config.terminationOperator.shouldTerminate({
-                generation: gen,
-                fitness: this.bestIndividual?.fitness,
-                population: this.population
-            })) {
-                break;
-            }
-        }
+        // Use the new LoopOperator for orchestration
+        this.bestIndividual = await memeticLoop(
+            this.population,
+            this.config,
+            this.localSearcher,
+            (pop) => {
+                if (!pop.length) return null as any;
+                return pop.reduce((best, ind) => ind.fitness > best.fitness ? ind : best);
+            },
+            applyLocalSearch
+        );
         return this.getBestIndividual();
     }
 
