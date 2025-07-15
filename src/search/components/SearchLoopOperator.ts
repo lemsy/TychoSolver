@@ -3,7 +3,8 @@ import { TerminationOperator as ITerminationOperator } from '../../core/operator
 import { ObjectiveFunction, NeighborhoodFunction, LocalSearchOptions, LocalSearchResult } from '../types';
 
 
-import { SequentialOperator, Operator as PipelineOperator } from '../../core/pipeline/SequentialOperator';
+import { SequentialOperator } from '../../core/pipeline/SequentialOperator';
+import { Step as PipelineStep } from '../../core/pipeline/Step';
 
 export const SearchLoopOperator = async ({
     currentSolution,
@@ -27,12 +28,12 @@ export const SearchLoopOperator = async ({
     terminationOperator: ITerminationOperator<any>;
 }): Promise<LocalSearchResult<any>> => {
     // Step 1: Evaluation
-    const evaluationStep: PipelineOperator<any> = {
+    const evaluationStep: PipelineStep<any> = {
         apply: async (solution: any) => await evaluationOperator.evaluate(solution)
     };
 
     // Step 2: Neighborhood move
-    const neighborhoodStep: PipelineOperator<{ solution: any; fitness: number }> = {
+    const neighborhoodStep: PipelineStep<{ solution: any; fitness: number }> = {
         apply: async ({ solution, fitness }) => await neighborhoodOperator({
             solution,
             fitness,

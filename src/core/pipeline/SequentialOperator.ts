@@ -1,16 +1,15 @@
-import { Operator } from './Operator';
-export type { Operator };
+import { Step } from './Step';
 
 /**
- * Applies a sequence of operators to the input, passing the result of each to the next.
+ * Applies a sequence of steps to the input, passing the result of each to the next.
  */
-export class SequentialOperator<T> implements Operator<T> {
-    constructor(private operators: Operator<T>[]) { }
+export class SequentialOperator<T> implements Step<T> {
+    constructor(private steps: Step<T>[]) { }
 
     async apply(input: T): Promise<T> {
         let result = input;
-        for (const op of this.operators) {
-            result = await op.apply(result);
+        for (const step of this.steps) {
+            result = await step.apply(result);
         }
         return result;
     }

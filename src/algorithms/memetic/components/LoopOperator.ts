@@ -1,6 +1,7 @@
 import type { Individual, MemeticOptions } from '../index';
 import { LocalSearch } from '../../../search/localSearch';
-import { SequentialOperator, Operator as PipelineOperator } from '../../../core/pipeline/SequentialOperator';
+import { SequentialOperator } from '../../../core/pipeline/SequentialOperator';
+import { Step as PipelineStep } from '../../../core/pipeline/Step';
 
 /**
  * Orchestrates the main evolutionary loop for the Memetic Algorithm.
@@ -17,7 +18,7 @@ export async function memeticLoop<T>(
     for (let gen = 0; gen < config.generations; gen++) {
         const fitnesses = population.map(ind => ind.fitness);
         // Step 1: Selection and offspring creation
-        const selectionAndOffspringStep: PipelineOperator<Individual<T>[]> = {
+        const selectionAndOffspringStep: PipelineStep<Individual<T>[]> = {
             apply: async (pop: Individual<T>[]) => {
                 const newPopulation: Individual<T>[] = [];
                 const fitnesses = pop.map(ind => ind.fitness);
@@ -46,7 +47,7 @@ export async function memeticLoop<T>(
         };
 
         // Step 2: Replacement
-        const replacementStep: PipelineOperator<Individual<T>[]> = {
+        const replacementStep: PipelineStep<Individual<T>[]> = {
             apply: async (newPopulation: Individual<T>[]) => {
                 if (config.replacementOperator) {
                     const replaced = await config.replacementOperator.replace(

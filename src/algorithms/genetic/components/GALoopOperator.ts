@@ -6,7 +6,8 @@ import { MutationOperator } from '../../../core/operators/MutationOperator';
 import { ReplacementOperator } from '../../../core/operators/ReplacementOperator';
 import { ElitismOperator } from '../../../core/operators/ElitismOperator';
 import { TerminationOperator } from '../../../core/operators/TerminationOperator';
-import { SequentialOperator, Operator as PipelineOperator } from '../../../core/pipeline/SequentialOperator';
+import { SequentialOperator } from '../../../core/pipeline/SequentialOperator';
+import { Step as PipelineStep } from '../../../core/pipeline/Step';
 // Import default implementations
 import { GAInitializationOperator } from './InitializationOperator';
 import { GAEvaluationOperator } from './EvaluationOperator';
@@ -121,11 +122,11 @@ export const GALoopOperator = async <T>({
 
     // --- Main Evolutionary Loop ---
     // Define pipeline steps as pipeline operators
-    const selectionStep: PipelineOperator<T[]> = {
+    const selectionStep: PipelineStep<T[]> = {
         apply: (currentPop: T[]) => selectOp.select(currentPop, fitnesses, currentPop.length)
     };
 
-    const crossoverMutationStep: PipelineOperator<T[]> = {
+    const crossoverMutationStep: PipelineStep<T[]> = {
         apply: (parents: T[]) => {
             let offspring: T[] = [];
             for (let i = 0; i < parents.length; i += 2) {
@@ -139,11 +140,11 @@ export const GALoopOperator = async <T>({
         }
     };
 
-    const replacementStep: PipelineOperator<T[]> = {
+    const replacementStep: PipelineStep<T[]> = {
         apply: async (offspring: T[]) => await replOp.replace(pop, offspring, fitnesses)
     };
 
-    const evaluationStep: PipelineOperator<T[]> = {
+    const evaluationStep: PipelineStep<T[]> = {
         apply: async (newPop: T[]) => {
             fitnesses = await Promise.all(newPop.map(ind => evalOp.evaluate(ind)));
             return newPop;
