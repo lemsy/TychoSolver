@@ -2,6 +2,9 @@ import { EvaluationOperator } from '../../core/operators/EvaluationOperator';
 import { TerminationOperator as ITerminationOperator } from '../../core/operators/TerminationOperator';
 import { ObjectiveFunction, NeighborhoodFunction, LocalSearchOptions, LocalSearchResult } from '../types';
 
+
+import { SequentialOperator, Operator as PipelineOperator } from '../../core/pipeline/SequentialOperator';
+
 export const SearchLoopOperator = async ({
     currentSolution,
     currentFitness,
@@ -23,41 +26,51 @@ export const SearchLoopOperator = async ({
     neighborhoodOperator: (args: any) => Promise<any>;
     terminationOperator: ITerminationOperator<any>;
 }): Promise<LocalSearchResult<any>> => {
-    // Evaluate current solution (optional, if needed)
-    const fitness = await evaluationOperator.evaluate(currentSolution);
-    // Perform one search step
-    const next = await neighborhoodOperator({
-        solution: currentSolution,
-        fitness,
-        neighborhoodFunction,
-        objectiveFunction,
-        options,
-        iterations
-    });
-    // Check for termination after move
-    const terminatedAfterMove = terminationOperator.shouldTerminate({
-        solution: next.solution,
-        fitness: next.fitness,
-        options,
-        iterations
-    });
-    if (!next || next.solution === currentSolution || terminatedAfterMove) {
-        return {
-            solution: next ? next.solution : currentSolution,
-            fitness: next ? next.fitness : fitness,
+    // Step 1: Evaluation
+    const evaluationStep: PipelineOperator<any> = {
+        apply: async (solution: any) => await evaluationOperator.evaluate(solution)
+    };
+
+    // Step 2: Neighborhood move
+    const neighborhoodStep: PipelineOperator<{ solution: any; fitness: number }> = {
+        apply: async ({ solution, fitness }) => await neighborhoodOperator({
+            solution,
+            fitness,
+            neighborhoodFunction,
+            objectiveFunction,
+            options,
             iterations
-        };
+        })
+    };
+
+    // Compose pipeline
+    const pipeline = new SequentialOperator<any>([
+        {
+            apply: async (input: { solution: any; fitness?: number }) => {
+                const fitness = input.fitness !== undefined ? input.fitness : await evaluationStep.apply(input.solution);
+                return { solution: input.solution, fitness };
+            }
+        },
+        neighborhoodStep
+    ]);
+
+    let state = { solution: currentSolution, fitness: currentFitness };
+    while (true) {
+        const next = await pipeline.apply(state);
+        const terminatedAfterMove = terminationOperator.shouldTerminate({
+            solution: next.solution,
+            fitness: next.fitness,
+            options,
+            iterations
+        });
+        if (!next || next.solution === state.solution || terminatedAfterMove) {
+            return {
+                solution: next ? next.solution : state.solution,
+                fitness: next ? next.fitness : state.fitness,
+                iterations
+            };
+        }
+        state = { solution: next.solution, fitness: next.fitness };
+        iterations++;
     }
-    // Continue search with incremented iterations
-    return await SearchLoopOperator({
-        currentSolution: next.solution,
-        currentFitness: next.fitness,
-        objectiveFunction,
-        neighborhoodFunction,
-        options,
-        iterations: iterations + 1,
-        evaluationOperator,
-        neighborhoodOperator,
-        terminationOperator
-    });
 };
