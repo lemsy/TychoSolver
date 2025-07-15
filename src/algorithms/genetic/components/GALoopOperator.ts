@@ -6,6 +6,7 @@ import { MutationOperator } from '../../../core/operators/MutationOperator';
 import { ReplacementOperator } from '../../../core/operators/ReplacementOperator';
 import { ElitismOperator } from '../../../core/operators/ElitismOperator';
 import { TerminationOperator } from '../../../core/operators/TerminationOperator';
+import { SequentialOperator, Operator as PipelineOperator } from '../../../core/pipeline/SequentialOperator';
 // Import default implementations
 import { GAInitializationOperator } from './InitializationOperator';
 import { GAEvaluationOperator } from './EvaluationOperator';
@@ -119,25 +120,47 @@ export const GALoopOperator = async <T>({
     const termOp = terminationOperator || (new GATerminationOperator<T>() as TerminationOperator<T>);
 
     // --- Main Evolutionary Loop ---
-    while (generation < maxGenerations && !termOp.shouldTerminate(pop)) {
-        // Selection
-        const parents = selectOp.select(pop, fitnesses, pop.length);
+    // Define pipeline steps as pipeline operators
+    const selectionStep: PipelineOperator<T[]> = {
+        apply: (currentPop: T[]) => selectOp.select(currentPop, fitnesses, currentPop.length)
+    };
 
-        // Crossover & Mutation
-        let offspring: T[] = [];
-        for (let i = 0; i < parents.length; i += 2) {
-            const parent1 = parents[i];
-            const parent2 = parents[i + 1] || parents[0];
-            const [child1, child2] = crossOp.crossover(parent1, parent2);
-            offspring.push(mutOp.mutate(child1));
-            offspring.push(mutOp.mutate(child2));
+    const crossoverMutationStep: PipelineOperator<T[]> = {
+        apply: (parents: T[]) => {
+            let offspring: T[] = [];
+            for (let i = 0; i < parents.length; i += 2) {
+                const parent1 = parents[i];
+                const parent2 = parents[i + 1] || parents[0];
+                const [child1, child2] = crossOp.crossover(parent1, parent2);
+                offspring.push(mutOp.mutate(child1));
+                offspring.push(mutOp.mutate(child2));
+            }
+            return offspring;
         }
+    };
 
-        // Replacement (now handles elitism internally)
-        pop = await replOp.replace(pop, offspring, fitnesses);
+    const replacementStep: PipelineOperator<T[]> = {
+        apply: async (offspring: T[]) => await replOp.replace(pop, offspring, fitnesses)
+    };
 
-        // Evaluate new population
-        fitnesses = await Promise.all(pop.map(ind => evalOp.evaluate(ind)));
+    const evaluationStep: PipelineOperator<T[]> = {
+        apply: async (newPop: T[]) => {
+            fitnesses = await Promise.all(newPop.map(ind => evalOp.evaluate(ind)));
+            return newPop;
+        }
+    };
+
+    // Compose pipeline
+    const pipeline = new SequentialOperator<T[]>([
+        selectionStep,
+        crossoverMutationStep,
+        replacementStep,
+        evaluationStep
+    ]);
+
+    while (generation < maxGenerations && !termOp.shouldTerminate(pop)) {
+        // Apply pipeline steps
+        pop = await pipeline.apply(pop);
 
         // Update best
         const genBestIdx = fitnesses.indexOf(Math.max(...fitnesses));
