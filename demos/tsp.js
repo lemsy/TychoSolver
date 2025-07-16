@@ -3,7 +3,7 @@
 // Run this file with: node demos/tsp.js
 
 const { ParallelLocalSearch } = require('../dist/parallel/localsearch/ParallelLocalSearch');
-const { createSpainTSPInstance, plotTSP, tspNeighborhood, tspObjective, SPAIN_MAP_URL } = require('./utils/tspDemoUtils');
+const { createSpainTSPInstance, plotTSP, tspNeighborhood, tspObjective } = require('./utils/tspDemoUtils');
 const fs = require('fs');
 const path = require('path');
 
@@ -21,7 +21,7 @@ if (!fs.existsSync(outputDir)) {
 
 // Save initial solution plot (over Spain map)
 const initialPlotPath = path.join(outputDir, 'tsp_initial.png');
-plotTSP(tspInstance, initialSolution, initialPlotPath, 'Initial TSP (Spain)', SPAIN_MAP_URL).then(() => {
+plotTSP(tspInstance, initialSolution, initialPlotPath, 'Initial TSP (Spain)').then(() => {
     console.log('Initial TSP instance and solution saved to', initialPlotPath);
 });
 
@@ -36,7 +36,7 @@ pls.search(
     const result = results[0];
     // Save solved solution plot (over Spain map)
     const solvedPlotPath = path.join(outputDir, 'tsp_solved.png');
-    await plotTSP(tspInstance, result.solution, solvedPlotPath, 'Solved TSP (Spain)', SPAIN_MAP_URL);
+    await plotTSP(tspInstance, result.solution, solvedPlotPath, 'Solved TSP (Spain)');
     console.log('Solved TSP solution saved to', solvedPlotPath);
     console.log('Initial cost:', tspInstance.evaluate(initialSolution));
     console.log('Final cost:', tspInstance.evaluate(result.solution));

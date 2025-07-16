@@ -117,8 +117,7 @@ const SPAIN_CITIES = [
     ["La Coruña", 43.3623, -8.4115]
 ];
 
-// Map image and bounds for Spain (Wikimedia Maps, free, no API key)
-const SPAIN_MAP_URL = 'https://maps.wikimedia.org/img/osm-intl,6,40.0,-3.5,600x600.png';
+// Map bounds for Spain (used for coordinate conversion)
 const MAP_WIDTH = 600, MAP_HEIGHT = 600, MAP_TOP = 44.2, MAP_BOTTOM = 35.2, MAP_LEFT = -9.5, MAP_RIGHT = 4.5;
 
 // Convert lat/lon to pixel (x, y) for the map image
@@ -186,7 +185,7 @@ function convexHull(points) {
 }
 
 // Plot TSP over Spain region outline (convex hull)
-async function plotTSP(instance, perm, outPath, title = '', mapUrl = null) {
+async function plotTSP(instance, perm, outPath, title = '') {
     const { cities } = instance;
     const width = 600, height = 600;
     const canvas = createCanvas(width, height + 40);
@@ -261,6 +260,5 @@ module.exports = {
     tspNeighborhood,
     tspObjective,
     createSpainTSPInstance,
-    SPAIN_MAP_URL,
     SPAIN_CITIES
 };
