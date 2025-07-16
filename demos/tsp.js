@@ -3,14 +3,13 @@
 // Run this file with: node demos/tsp.js
 
 const { ParallelLocalSearch } = require('../dist/parallel/localsearch/ParallelLocalSearch');
-const { createTSPInstance, plotTSP, tspNeighborhood, tspObjective } = require('./utils/tspDemoUtils');
+const { createSpainTSPInstance, plotTSP, tspNeighborhood, tspObjective, SPAIN_MAP_URL } = require('./utils/tspDemoUtils');
 const fs = require('fs');
 const path = require('path');
 
-// Generate a "hard" TSP instance (e.g., 100 cities in a circle with noise)
-const N = 100;
-const tspInstance = createTSPInstance(N, { hard: true });
-
+// Use real Spain cities for TSP instance
+const tspInstance = createSpainTSPInstance();
+const N = tspInstance.cities.length;
 // Initial solution: random permutation
 const initialSolution = [...Array(N).keys()].sort(() => Math.random() - 0.5);
 
@@ -20,10 +19,11 @@ if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir);
 }
 
-// Save initial solution plot
+// Save initial solution plot (over Spain map)
 const initialPlotPath = path.join(outputDir, 'tsp_initial.png');
-plotTSP(tspInstance, initialSolution, initialPlotPath, 'Initial TSP');
-console.log('Initial TSP instance and solution saved to', initialPlotPath);
+plotTSP(tspInstance, initialSolution, initialPlotPath, 'Initial TSP (Spain)', SPAIN_MAP_URL).then(() => {
+    console.log('Initial TSP instance and solution saved to', initialPlotPath);
+});
 
 // Run Parallel Local Search (batch of 1 for demo)
 const pls = new ParallelLocalSearch();
@@ -32,11 +32,11 @@ pls.search(
     (tour) => tspObjective(tour, tspInstance),
     tspNeighborhood,
     { maxIterations: 10000, maximize: false }
-).then(results => {
+).then(async results => {
     const result = results[0];
-    // Save solved solution plot
+    // Save solved solution plot (over Spain map)
     const solvedPlotPath = path.join(outputDir, 'tsp_solved.png');
-    plotTSP(tspInstance, result.solution, solvedPlotPath, 'Solved TSP');
+    await plotTSP(tspInstance, result.solution, solvedPlotPath, 'Solved TSP (Spain)', SPAIN_MAP_URL);
     console.log('Solved TSP solution saved to', solvedPlotPath);
     console.log('Initial cost:', tspInstance.evaluate(initialSolution));
     console.log('Final cost:', tspInstance.evaluate(result.solution));
