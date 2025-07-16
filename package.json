@@ -1,6 +1,6 @@
 {
   "name": "tycho-solver",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Evolutionary computation and optimization library",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -31,10 +31,9 @@
     "ec",
     "typescript"
   ],
-  "author": "Your Name",
+  "author": "Ismel Martínez Díaz",
   "license": "MPL-2.0",
   "dependencies": {
-    "tycho-solver": "file:",
     "typescript": "^5.8.2"
   },
   "devDependencies": {

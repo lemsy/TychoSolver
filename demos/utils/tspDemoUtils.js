@@ -145,25 +145,6 @@ function createSpainTSPInstance() {
     };
 }
 
-// Plot TSP solution to PNG
-
-
-// Helper to download an image from a URL and return a buffer (Promise)
-function downloadImageBuffer(url) {
-    return new Promise((resolve, reject) => {
-        https.get(url, (res) => {
-            if (res.statusCode !== 200) {
-                reject(new Error('Failed to download image: ' + res.statusCode));
-                return;
-            }
-            const data = [];
-            res.on('data', chunk => data.push(chunk));
-            res.on('end', () => resolve(Buffer.concat(data)));
-        }).on('error', reject);
-    });
-}
-
-
 // Compute convex hull using Graham scan (returns array of [x, y])
 function convexHull(points) {
     points = points.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
