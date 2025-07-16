@@ -1,3 +1,6 @@
+# Ignore demo output folders
+demos/output/
+demos/output_tsp/
 # Dependencies
 node_modules/
 npm-debug.log
@@ -39,5 +42,3 @@ coverage/
 # GitHub Actions local files
 .github/.env
 
-# Ignore output images from Sudoku demo
-demos/output/

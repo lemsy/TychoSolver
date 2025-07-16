@@ -18,7 +18,8 @@
     "test:coverage": "jest --coverage",
     "prepublish": "npm run build",
     "test:watch": "jest --watch",
-    "sudoku-demo": "npm run build && node demos/sudoku.js"
+    "sudoku-demo": "npm run build && node demos/sudoku.js",
+    "tsp-demo": "npm run build && node demos/tsp.js"
   },
   "keywords": [
     "evolutionary computation",
