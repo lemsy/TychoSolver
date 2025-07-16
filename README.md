@@ -281,6 +281,86 @@ console.log('Objective value:', result.fitness);
 console.log('Iterations performed:', result.iterations);
 ```
 
+### Parallel Local Search
+
+Parallel Local Search allows you to run multiple local searches in parallel (asynchronously) on a batch of initial solutions. This is useful for batch optimization, such as solving multiple instances of a problem or running local search from different starting points to increase the chance of finding a global optimum.
+
+#### Example: Batch TSP Optimization
+
+```typescript
+import { ParallelLocalSearch } from 'tycho-solver';
+
+// Suppose you have a batch of initial TSP tours
+const numCities = 22;
+const distances: number[][] = Array.from({ length: numCities }, (_, i) =>
+  Array.from({ length: numCities }, (_, j) =>
+    i === j ? 0 : Math.floor(Math.abs(Math.sin(i * 13.37 + j * 7.77)) * 100 + Math.abs(i - j) * 3 + 10)
+  )
+);
+// Make symmetric
+for (let i = 0; i < numCities; i++) {
+  for (let j = i + 1; j < numCities; j++) {
+    distances[j][i] = distances[i][j];
+  }
+}
+type Tour = number[];
+
+const objective = (tour: Tour) => {
+  let sum = 0;
+  for (let i = 0; i < tour.length; i++) {
+    sum += distances[tour[i]][tour[(i + 1) % tour.length]];
+  }
+  return sum;
+};
+
+const neighborhood = (tour: Tour) => {
+  const neighbors: Tour[] = [];
+  for (let i = 0; i < tour.length; i++) {
+    for (let j = i + 1; j < tour.length; j++) {
+      const copy = tour.slice();
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+      neighbors.push(copy);
+    }
+  }
+  return neighbors;
+};
+
+function randomTour(): Tour {
+  const arr = Array.from({ length: numCities }, (_, i) => i);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+const batchSize = 10;
+const initialTours = Array.from({ length: batchSize }, randomTour);
+const options = { maxIterations: 200, maximize: false };
+
+const pls = new ParallelLocalSearch<Tour>();
+pls.search(initialTours, objective, neighborhood, options).then((results) => {
+  results.forEach((result, idx) => {
+    console.log(`Tour #${idx} best solution:`, result.solution);
+    console.log(`Tour #${idx} objective:`, result.fitness);
+  });
+});
+```
+
+#### API
+
+```typescript
+class ParallelLocalSearch<T> {
+  search(
+    initialSolutions: T[],
+    objectiveFunction: ObjectiveFunction<T>,
+    neighborhoodFunction: NeighborhoodFunction<T>,
+    options?: LocalSearchOptions<T>
+  ): Promise<LocalSearchResult<T>[]>;
+}
+```
+
+Each search is running asynchronously, and the results are returned as an array of local search results (one per initial solution).
 ## API Documentation
 
 ### Core Types
