@@ -12,7 +12,7 @@ export const RandomRestartsOperator = async ({
 }: {
     initialSolution: any;
     objectiveFunction: ObjectiveFunction<any>;
-    neighborhoodFunction: NeighborhoodFunction<any>;
+    neighborhoodFunction?: NeighborhoodFunction<any> | null;
     options: LocalSearchOptions<any>;
 }) => {
     const { randomRestarts = 1, randomInitializer } = options;
@@ -26,7 +26,7 @@ export const RandomRestartsOperator = async ({
             initialSolution: restart === 0 ? initialSolution : (randomInitializer ? randomInitializer() : initialSolution),
             randomInitializer: undefined,
             objectiveFunction,
-            neighborhoodFunction,
+            neighborhoodFunction: neighborhoodFunction ?? undefined,
             options,
             evaluationOperator,
             neighborhoodOperator,

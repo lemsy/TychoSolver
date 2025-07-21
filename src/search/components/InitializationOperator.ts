@@ -6,7 +6,7 @@ export class LSInitializationOperator implements IInitializationOperator<any> {
         initialSolution: any;
         randomInitializer?: () => any;
         objectiveFunction: ObjectiveFunction<any>;
-        neighborhoodFunction: NeighborhoodFunction<any>;
+        neighborhoodFunction?: NeighborhoodFunction<any> | null;
         options: LocalSearchOptions<any>;
         evaluationOperator: { evaluate: (solution: any) => Promise<number> };
         neighborhoodOperator: (args: any) => Promise<any>;

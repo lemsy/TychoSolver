@@ -20,7 +20,7 @@ export const SearchLoopOperator = async ({
     currentSolution: any;
     currentFitness: number;
     objectiveFunction: ObjectiveFunction<any>;
-    neighborhoodFunction: NeighborhoodFunction<any>;
+    neighborhoodFunction?: NeighborhoodFunction<any> | null;
     options: LocalSearchOptions<any>;
     iterations?: number;
     evaluationOperator: EvaluationOperator<any>;

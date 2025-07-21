@@ -8,7 +8,7 @@ export class LocalSearch<T> {
   public async search(
     initialSolution: T,
     objectiveFunction: ObjectiveFunction<T>,
-    neighborhoodFunction: NeighborhoodFunction<T>,
+    neighborhoodFunction?: NeighborhoodFunction<T> | null,
     options: LocalSearchOptions<T> = {}
   ): Promise<LocalSearchResult<T>> {
     // Ensure maximize defaults to true unless explicitly set to false
@@ -17,7 +17,7 @@ export class LocalSearch<T> {
     return await RandomRestartsOperator({
       initialSolution,
       objectiveFunction,
-      neighborhoodFunction,
+      neighborhoodFunction: neighborhoodFunction ?? undefined,
       options: opts
     });
   }
