@@ -2,6 +2,22 @@ import { LocalSearch } from '../../src/search/localSearch';
 import { ObjectiveFunction, NeighborhoodFunction, LocalSearchOptions } from '../../src/search/types';
 
 describe('LocalSearch - Dynamic Neighborhood', () => {
+    it('runs for maxIterations with dynamic neighborhood even if no improvement', async () => {
+        // Objective: maximize x, but neighborhood always returns the same value
+        const objective: ObjectiveFunction<number> = (x) => x;
+        // Dynamic neighborhood: always returns only the current solution
+        const dynamicNeighborhood: NeighborhoodFunction<number> = (x) => [x];
+        const search = new LocalSearch<number>();
+        const maxIterations = 7;
+        const result = await search.search(0, objective, null, {
+            maxIterations,
+            maximize: true,
+            dynamicNeighborhoodFunction: dynamicNeighborhood,
+        });
+        // Should not improve, but should run for maxIterations
+        expect(result.solution).toBe(0);
+        expect(result.iterations).toBe(maxIterations);
+    });
     it('solves a small TSP with a closure-based dynamic neighborhood cycling cities', async () => {
         // TSP: 4 cities, distance matrix
         const distances = [

@@ -56,6 +56,8 @@ export const SearchLoopOperator = async ({
     ]);
 
     let state = { solution: currentSolution, fitness: currentFitness };
+    const useDynamic = !!options.dynamicNeighborhoodFunction;
+    const maxIterations = options.maxIterations ?? 1000;
     while (true) {
         const next = await pipeline.apply(state);
         const terminatedAfterMove = terminationOperator.shouldTerminate({
@@ -64,7 +66,7 @@ export const SearchLoopOperator = async ({
             options,
             iterations
         });
-        if (!next || next.solution === state.solution || terminatedAfterMove) {
+        if (!next || terminatedAfterMove || (!useDynamic && next.solution === state.solution)) {
             return {
                 solution: next ? next.solution : state.solution,
                 fitness: next ? next.fitness : state.fitness,
@@ -73,5 +75,12 @@ export const SearchLoopOperator = async ({
         }
         state = { solution: next.solution, fitness: next.fitness };
         iterations++;
+        if (useDynamic && iterations >= maxIterations) {
+            return {
+                solution: state.solution,
+                fitness: state.fitness,
+                iterations
+            };
+        }
     }
 };
