@@ -122,3 +122,6 @@ export class MemeticAlgorithm<T> {
         return this.population;
     }
 }
+
+// Export components for advanced usage
+export * from './components';

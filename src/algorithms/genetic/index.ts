@@ -84,3 +84,6 @@ export class GeneticAlgorithm<T> implements EvolutionaryAlgorithm<T> {
     return this.generation;
   }
 }
+
+// Export components for advanced usage
+export * from './components';

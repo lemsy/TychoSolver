@@ -90,14 +90,17 @@ export const geneticAlgorithmUtils = {
  * and optimization problems.
  */
 
-// Core interfaces
-export * from './core/types';
+// Core interfaces and operators
+export * from './core';
 
 // Algorithm implementations
 export * from './algorithms';
 
+// Search algorithms and components
+export * from './search';
+
+// Parallel computation modules
+export * from './parallel';
+
 // Utility functions
 export * from './utils';
-
-// Local search algorithm and types
-export * from './search/localSearch';
