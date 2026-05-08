@@ -1,6 +1,7 @@
 import type { Individual, MemeticOptions } from '../index';
 import { LocalSearch } from '../../../search/localSearch';
 import { SequentialOperator } from '../../../core/pipeline/SequentialOperator';
+import { RNG } from '../../../utils/rng';
 import { Step as PipelineStep } from '../../../core/pipeline/Step';
 
 /**
@@ -12,7 +13,8 @@ export async function memeticLoop<T>(
     config: MemeticOptions<T>,
     localSearcher: LocalSearch<T>,
     updateBest: (population: Individual<T>[]) => Individual<T>,
-    applyLocalSearch: (genome: T, config: MemeticOptions<T>, localSearcher: LocalSearch<T>) => Promise<T>
+    applyLocalSearch: (genome: T, config: MemeticOptions<T>, localSearcher: LocalSearch<T>) => Promise<T>,
+    rng?: RNG
 ): Promise<Individual<T>> {
     let bestIndividual: Individual<T> | null = null;
     for (let gen = 0; gen < config.generations; gen++) {
@@ -25,14 +27,16 @@ export async function memeticLoop<T>(
                 while (newPopulation.length < config.populationSize) {
                     const parents = config.selectionOperator.select(pop, fitnesses, 2);
                     const [parent1, parent2] = parents;
-                    let offspringGenome =
-                        Math.random() < config.crossoverRate
-                            ? config.crossoverOperator.crossover(parent1.genome, parent2.genome)[0]
-                            : parent1.genome;
-                    if (Math.random() < config.mutationRate) {
+                    const r1 = rng ? rng.random() : Math.random();
+                    let offspringGenome = r1 < config.crossoverRate
+                        ? config.crossoverOperator.crossover(parent1.genome, parent2.genome)[0]
+                        : parent1.genome;
+                    const r2 = rng ? rng.random() : Math.random();
+                    if (r2 < config.mutationRate) {
                         offspringGenome = config.mutationOperator.mutate(offspringGenome);
                     }
-                    if (Math.random() < config.localSearchRate) {
+                    const r3 = rng ? rng.random() : Math.random();
+                    if (r3 < config.localSearchRate) {
                         offspringGenome = await applyLocalSearch(
                             offspringGenome,
                             config,

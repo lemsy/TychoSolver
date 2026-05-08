@@ -56,7 +56,7 @@ export class GeneticAlgorithm<T> implements EvolutionaryAlgorithm<T> {
 
   async evolve(generations?: number): Promise<T> {
     const gens = generations || this.config.maxGenerations;
-    const eliteCount = (this.config as any).eliteCount || 0;
+    const eliteCount = (this.config as any).eliteCount ?? 1;
     const fitnessLimit = (this.config as any).fitnessLimit;
     const result = await GALoopOperator({
       population: this.population,

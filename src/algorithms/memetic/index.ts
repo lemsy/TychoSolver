@@ -8,6 +8,7 @@ import type { MutationOperator } from '../../core/operators/MutationOperator';
 import type { ReplacementOperator } from '../../core/operators/ReplacementOperator';
 import type { TerminationOperator } from '../../core/operators/TerminationOperator';
 import { memeticLoop } from './components/LoopOperator';
+import { RNG, seededRandom } from '../../utils/rng';
 
 export interface Individual<T> {
     genome: T;
@@ -75,10 +76,12 @@ export class MemeticAlgorithm<T> {
     private config: MemeticOptions<T>;
     private localSearcher: LocalSearch<T>;
     private bestIndividual: Individual<T> | null = null;
+    private rng: RNG;
 
     constructor(config: MemeticOptions<T>) {
         this.config = config;
         this.localSearcher = new LocalSearch<T>();
+        this.rng = seededRandom();
     }
 
     public async initializePopulation() {
@@ -99,7 +102,8 @@ export class MemeticAlgorithm<T> {
                 if (!pop.length) return null as any;
                 return pop.reduce((best, ind) => ind.fitness > best.fitness ? ind : best);
             },
-            applyLocalSearch
+            applyLocalSearch,
+            this.rng
         );
         return this.getBestIndividual();
     }

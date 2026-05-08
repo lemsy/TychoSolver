@@ -14,12 +14,12 @@ export class MutationOperatorImpl<T extends any[]> implements MutationOperator<T
     ) {
         // default gene mutator: identity (no change)
         this.geneMutator = geneMutator || ((g: any) => g);
-        this.mutationRate = mutationRate ?? 1;
+        this.mutationRate = mutationRate ?? 0.01;
         this.rng = rng;
     }
 
     mutate(individual: T): T {
-        const rate = this.mutationRate / individual.length;
+        const rate = this.mutationRate;
         const mutated = individual.map((gene, idx) => {
             const r = this.rng ? this.rng.random() : Math.random();
             if (r < rate) {

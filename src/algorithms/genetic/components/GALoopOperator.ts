@@ -94,7 +94,7 @@ export const GALoopOperator = async <T>({
     }) as ReplacementOperator<T>);
 
     // --- SelectionOperator ---
-    const selectOp = selectionOperator || (new SelectionOperatorImpl<T>() as SelectionOperator<T>);
+    const selectOp = selectionOperator || (new SelectionOperatorImpl<T>(rng) as SelectionOperator<T>);
 
     // --- CrossoverOperator ---
     let crossOp: CrossoverOperator<T>;
@@ -102,7 +102,7 @@ export const GALoopOperator = async <T>({
         crossOp = crossoverOperator;
     } else {
         try {
-            crossOp = new (CrossoverOperatorImpl as any)() as CrossoverOperator<T>;
+            crossOp = new (CrossoverOperatorImpl as any)(rng) as CrossoverOperator<T>;
         } catch {
             throw new Error('No default crossover operator for this individual type. Please provide one.');
         }
