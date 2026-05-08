@@ -1,5 +1,6 @@
 import { LocalSearch } from '../../src/search/localSearch';
 import { ObjectiveFunction, NeighborhoodFunction } from '../../src/search/types';
+import { logger } from '../../src/utils';
 
 describe('LocalSearch - Deceptive Trap Function', () => {
     it('should solve the Deceptive Trap problem (for k=5)', async () => {
@@ -50,7 +51,6 @@ describe('LocalSearch - Deceptive Trap Function', () => {
         const deceptiveFitness = (k - 1) * n / k;
         expect(result.fitness).toBeGreaterThanOrEqual(deceptiveFitness);
         expect(result.fitness).toBeLessThanOrEqual(n);
-        // eslint-disable-next-line no-console
-        console.info('Deceptive Trap: best solution found:', result.solution, 'fitness:', result.fitness);
+        logger.info('Deceptive Trap: best solution found:', result.solution, 'fitness:', result.fitness);
     });
 });

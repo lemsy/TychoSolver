@@ -1,6 +1,7 @@
 import { LocalSearch } from '../../src/search/localSearch';
 import { ParallelLocalSearch } from '../../src/parallel/localsearch/ParallelLocalSearch';
 import type { ObjectiveFunction, NeighborhoodFunction } from '../../src/search/types';
+import { logger } from '../../src/utils';
 
 describe('ParallelLocalSearch vs LocalSearch - TSP', () => {
     // Even larger TSP instance: 22 cities, random symmetric distances
@@ -72,7 +73,6 @@ describe('ParallelLocalSearch vs LocalSearch - TSP', () => {
         // Allow some tolerance (parallel should be at least not slower)
         expect(parTime).toBeLessThan(seqTime * 0.95);
         // Log for info
-        // eslint-disable-next-line no-console
-        console.info(`Sequential: ${seqTime}ms, Parallel: ${parTime}ms`);
+        logger.info(`Sequential: ${seqTime}ms, Parallel: ${parTime}ms`);
     });
 });
