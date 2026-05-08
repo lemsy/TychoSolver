@@ -17,6 +17,7 @@ import { CrossoverOperatorImpl } from './CrossoverOperator';
 import { MutationOperatorImpl } from './MutationOperator';
 import { ReplacementOperatorImpl } from './ReplacementOperator';
 import { ElitismOperatorImpl } from './ElitismOperator';
+import { RNG } from '../../../utils/rng';
 
 interface GALoopOperatorConfig<T> {
     population?: T[]; // Now optional, can be created by InitializationOperator
@@ -33,6 +34,7 @@ interface GALoopOperatorConfig<T> {
     eliteCount?: number;
     fitnessLimit?: number;
     populationSize?: number; // For initialization
+    rng?: RNG;
 }
 
 export const GALoopOperator = async <T>({
@@ -49,11 +51,12 @@ export const GALoopOperator = async <T>({
     maxGenerations,
     eliteCount = 0,
     fitnessLimit,
-    populationSize = 100 // default size if not provided
+    populationSize = 100, // default size if not provided
+    rng
 }: GALoopOperatorConfig<T>): Promise<{ bestSolution: T; bestFitness: number; population: T[]; generation: number }> => {
     // --- InitializationOperator creates the population if not provided ---
     const initOp = initializationOperator || new GAInitializationOperator<T>();
-    let pop: T[] = population ? population : (await (initOp.initialize ? initOp.initialize(populationSize) : [])) as T[];
+    let pop: T[] = population ? population : (await (initOp.initialize ? initOp.initialize({ populationSize, rng }) : [])) as T[];
     if (!pop || pop.length === 0) throw new Error('Population could not be initialized.');
 
     // --- EvaluationOperator ---
@@ -111,7 +114,9 @@ export const GALoopOperator = async <T>({
         mutOp = mutationOperator;
     } else {
         try {
-            mutOp = new (MutationOperatorImpl as any)() as MutationOperator<T>;
+            // MutationOperatorImpl is implemented for array-like individuals.
+            // Instantiate it as `any` and cast to `MutationOperator<T>` to satisfy callers.
+            mutOp = new MutationOperatorImpl<any>(undefined, undefined, rng) as unknown as MutationOperator<T>;
         } catch {
             throw new Error('No default mutation operator for this individual type. Please provide one.');
         }

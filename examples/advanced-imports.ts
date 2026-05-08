@@ -52,7 +52,8 @@ import {
 // Utility functions
 import {
     random,
-    randomInt
+    randomInt,
+    logger
 } from '../src/utils';
 
 // Legacy GA utilities (still available from main index)
@@ -62,7 +63,7 @@ import {
     geneticAlgorithmUtils
 } from '../src/index';
 
-console.log('All advanced imports work correctly!');
+logger.info('All advanced imports work correctly!');
 
 // Example of using advanced components
 function advancedComponentExample() {
@@ -72,5 +73,5 @@ function advancedComponentExample() {
     // Custom crossover operator  
     const customCrossover = new CrossoverOperatorImpl<number[]>();
 
-    console.log('Custom operators created successfully');
+    logger.info('Custom operators created successfully');
 }

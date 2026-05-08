@@ -6,6 +6,7 @@ import { EvolutionaryAlgorithm, EvolutionaryConfig, FitnessFunction } from '../.
 import { GALoopOperator } from './components/GALoopOperator';
 import { GAInitializationOperator } from './components/InitializationOperator';
 import { GAEvaluationOperator } from './components/EvaluationOperator';
+import { RNG, seededRandom } from '../../utils/rng';
 
 export class GeneticAlgorithm<T> implements EvolutionaryAlgorithm<T> {
   private population: T[];
@@ -14,6 +15,7 @@ export class GeneticAlgorithm<T> implements EvolutionaryAlgorithm<T> {
   private generation: number;
   private config: EvolutionaryConfig;
   private fitnessFunction: FitnessFunction<T>;
+  private rng?: RNG;
 
   constructor(
     fitnessFunction: FitnessFunction<T>,
@@ -23,11 +25,17 @@ export class GeneticAlgorithm<T> implements EvolutionaryAlgorithm<T> {
     this.config = config;
     this.generation = 0;
 
+    // RNG: create seeded RNG if seed provided, or use provided rng
+    const seed = (config as any).seed as number | undefined;
+    const rng: RNG = (config as any).rng || seededRandom(seed);
+    this.rng = rng;
+
     // Step 1: Always use InitializationOperator to create the population
     const initializationOperator = (config as any).initializationOperator || new GAInitializationOperator<T>();
     this.population = initializationOperator.initialize({
       populationSize: (config as any).populationSize || 100,
-      individualFactory: (config as any).individualFactory
+      individualFactory: (config as any).individualFactory,
+      rng
     });
     if (!Array.isArray(this.population) || this.population.length === 0) {
       throw new Error('InitializationOperator produced an empty population. This is not allowed.');
@@ -60,7 +68,7 @@ export class GeneticAlgorithm<T> implements EvolutionaryAlgorithm<T> {
       evaluationOperator: (this.config as any).evaluationOperator,
       mutationOperator: (this.config as any).mutationOperator,
       crossoverOperator: (this.config as any).crossoverOperator
-    });
+  , rng: this.rng });
     this.population = result.population;
     this.bestSolution = result.bestSolution;
     this.bestFitness = result.bestFitness;

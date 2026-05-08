@@ -8,6 +8,7 @@ import {
     ObjectiveFunction,
     NeighborhoodFunction
 } from '../src/index';
+import { logger } from '../src/utils';
 
 // Example 1: Simple Genetic Algorithm
 function basicGeneticAlgorithmExample() {
@@ -24,8 +25,8 @@ function basicGeneticAlgorithmExample() {
 
     const ga = new GeneticAlgorithm(fitnessFunction, config);
 
-    console.log('Running Genetic Algorithm...');
-    // ga.evolve().then(result => console.log('Best solution:', result));
+    logger.info('Running Genetic Algorithm...');
+    // ga.evolve().then(result => logger.info('Best solution:', result));
 }
 
 // Example 2: Local Search
@@ -53,21 +54,21 @@ function basicLocalSearchExample() {
 
     const localSearch = new LocalSearch<number[]>();
 
-    console.log('Running Local Search...');
+    logger.info('Running Local Search...');
     // localSearch.search(initialSolution, objectiveFunction, neighborhoodFunction, options)
-    //   .then(result => console.log('Best solution:', result));
+    //   .then(result => logger.info('Best solution:', result));
 }
 
 // Example 3: Using specific operators for advanced usage
 function advancedUsageExample() {
     // Import specific components for custom configurations
     // This shows how users can access individual operators
-    console.log('Advanced usage with custom operators...');
+    logger.info('Advanced usage with custom operators...');
 }
 
 // Run examples
-console.log('TychoSolver Usage Examples');
-console.log('==========================');
+logger.info('TychoSolver Usage Examples');
+logger.info('==========================');
 basicGeneticAlgorithmExample();
 basicLocalSearchExample();
 advancedUsageExample();
