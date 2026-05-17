@@ -13,40 +13,54 @@ export class GeneticAlgorithm<T> implements EvolutionaryAlgorithm<T> {
   private bestSolution: T;
   private bestFitness: number;
   private generation: number;
-  private config: EvolutionaryConfig;
+  private config: EvolutionaryConfig<T>;
   private fitnessFunction: FitnessFunction<T>;
   private rng?: RNG;
 
   constructor(
     fitnessFunction: FitnessFunction<T>,
-    config: EvolutionaryConfig
+    config: EvolutionaryConfig<T>
   ) {
     this.fitnessFunction = fitnessFunction;
     this.config = config;
     this.generation = 0;
 
     // RNG: create seeded RNG if seed provided, or use provided rng
-    const seed = (config as any).seed as number | undefined;
-    const rng: RNG = (config as any).rng || seededRandom(seed);
+    const seed = config.seed as number | undefined;
+    const rng: RNG = config.rng || seededRandom(seed);
     this.rng = rng;
 
     // Step 1: Always use InitializationOperator to create the population
-    const initializationOperator = (config as any).initializationOperator || new GAInitializationOperator<T>();
-    this.population = initializationOperator.initialize({
-      populationSize: (config as any).populationSize || 100,
-      individualFactory: (config as any).individualFactory,
+    const initializationOperator = config.initializationOperator || new GAInitializationOperator<T>();
+    const initResult = initializationOperator.initialize({
+      populationSize: config.populationSize || 100,
+      individualFactory: config.individualFactory,
       rng
     });
+    // `initialize` may be async in other operators; GeneticAlgorithm constructor is synchronous
+    // so reject async initialization here to keep `this.population` a T[].
+    if (initResult && typeof (initResult as any).then === 'function') {
+      throw new Error('Asynchronous initialization is not supported in GeneticAlgorithm constructor. Provide a synchronous InitializationOperator or use a factory that awaits initialization.');
+    }
+    this.population = initResult as T[];
     if (!Array.isArray(this.population) || this.population.length === 0) {
       throw new Error('InitializationOperator produced an empty population. This is not allowed.');
     }
 
     // Step 2: Evaluation
-    const evaluationOperator = (config as any).evaluationOperator || new GAEvaluationOperator<T>(fitnessFunction as (ind: T) => number);
+    const evaluationOperator = config.evaluationOperator || new GAEvaluationOperator<T>(fitnessFunction as (ind: T) => number);
     this.bestSolution = this.population[0];
-    this.bestFitness = evaluationOperator.evaluate(this.bestSolution);
+    const initialEval = evaluationOperator.evaluate(this.bestSolution);
+    if (initialEval && typeof (initialEval as any).then === 'function') {
+      throw new Error('Asynchronous evaluation is not supported in GeneticAlgorithm constructor. Provide a synchronous EvaluationOperator.');
+    }
+    this.bestFitness = initialEval as number;
     for (const individual of this.population) {
-      const fitness = evaluationOperator.evaluate(individual);
+      const fitnessResult = evaluationOperator.evaluate(individual);
+      if (fitnessResult && typeof (fitnessResult as any).then === 'function') {
+        throw new Error('Asynchronous evaluation is not supported in GeneticAlgorithm constructor. Provide a synchronous EvaluationOperator.');
+      }
+      const fitness = fitnessResult as number;
       if (fitness > this.bestFitness) {
         this.bestFitness = fitness;
         this.bestSolution = individual;
@@ -56,19 +70,20 @@ export class GeneticAlgorithm<T> implements EvolutionaryAlgorithm<T> {
 
   async evolve(generations?: number): Promise<T> {
     const gens = generations || this.config.maxGenerations;
-    const eliteCount = (this.config as any).eliteCount ?? 1;
-    const fitnessLimit = (this.config as any).fitnessLimit;
+    const eliteCount = this.config.eliteCount ?? 1;
+    const fitnessLimit = this.config.fitnessLimit;
     const result = await GALoopOperator({
       population: this.population,
       fitnessFunction: this.fitnessFunction,
       maxGenerations: gens,
       eliteCount,
       fitnessLimit,
-      initializationOperator: (this.config as any).initializationOperator,
-      evaluationOperator: (this.config as any).evaluationOperator,
-      mutationOperator: (this.config as any).mutationOperator,
-      crossoverOperator: (this.config as any).crossoverOperator
-  , rng: this.rng });
+      initializationOperator: this.config.initializationOperator,
+      evaluationOperator: this.config.evaluationOperator,
+      mutationOperator: this.config.mutationOperator,
+      crossoverOperator: this.config.crossoverOperator,
+      rng: this.rng
+    });
     this.population = result.population;
     this.bestSolution = result.bestSolution;
     this.bestFitness = result.bestFitness;

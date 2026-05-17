@@ -132,12 +132,17 @@ export const GALoopOperator = async <T>({
     };
 
     const crossoverMutationStep: PipelineStep<T[]> = {
-        apply: (parents: T[]) => {
+        apply: async (parents: T[]) => {
             let offspring: T[] = [];
             for (let i = 0; i < parents.length; i += 2) {
                 const parent1 = parents[i];
                 const parent2 = parents[i + 1] || parents[0];
-                const [child1, child2] = crossOp.crossover(parent1, parent2);
+                const crossRes = crossOp.crossover(parent1, parent2);
+                const children = (crossRes && typeof (crossRes as any).then === 'function')
+                    ? await (crossRes as Promise<T[]>)
+                    : (crossRes as T[]);
+                const child1 = children[0];
+                const child2 = children[1] !== undefined ? children[1] : children[0];
                 offspring.push(mutOp.mutate(child1));
                 offspring.push(mutOp.mutate(child2));
             }

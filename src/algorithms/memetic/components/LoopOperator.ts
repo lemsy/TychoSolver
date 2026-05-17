@@ -28,9 +28,16 @@ export async function memeticLoop<T>(
                     const parents = config.selectionOperator.select(pop, fitnesses, 2);
                     const [parent1, parent2] = parents;
                     const r1 = rng ? rng.random() : Math.random();
-                    let offspringGenome = r1 < config.crossoverRate
-                        ? config.crossoverOperator.crossover(parent1.genome, parent2.genome)[0]
-                        : parent1.genome;
+                    let offspringGenome: T;
+                    if (r1 < config.crossoverRate) {
+                        const crossRes = config.crossoverOperator.crossover(parent1.genome, parent2.genome);
+                        const children = (crossRes && typeof (crossRes as any).then === 'function')
+                            ? await (crossRes as Promise<T[]>)
+                            : (crossRes as T[]);
+                        offspringGenome = children[0];
+                    } else {
+                        offspringGenome = parent1.genome;
+                    }
                     const r2 = rng ? rng.random() : Math.random();
                     if (r2 < config.mutationRate) {
                         offspringGenome = config.mutationOperator.mutate(offspringGenome);

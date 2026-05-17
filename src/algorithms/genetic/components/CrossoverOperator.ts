@@ -9,7 +9,7 @@ export class CrossoverOperatorImpl<T extends any[]> implements CrossoverOperator
         this.rng = rng;
     }
 
-    crossover(parent1: T, parent2: T): [T, T] {
+    crossover(parent1: T, parent2: T): T[] {
         if (parent1.length !== parent2.length) return [parent1, parent2];
         const point = this.rng ? this.rng.int(parent1.length) : Math.floor(Math.random() * parent1.length);
         const child1 = [...parent1.slice(0, point), ...parent2.slice(point)] as T;
