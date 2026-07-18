@@ -1,4 +1,4 @@
-/// <reference types="jest" />
+import { describe, it, expect } from 'vitest';
 import { GeneticAlgorithm } from '../../src/algorithms/genetic';
 
 describe('Genetic Algorithm', () => {

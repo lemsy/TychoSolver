@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { geneticAlgorithmUtils } from '../src';
 
 describe('geneticAlgorithmUtils', () => {

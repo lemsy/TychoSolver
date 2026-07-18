@@ -1,3 +1,5 @@
+
+import { describe, it, expect } from 'vitest';
 import { LocalSearch } from '../../src/search/localSearch';
 import { ObjectiveFunction, NeighborhoodFunction } from '../../src/search/types';
 import { logger } from '../../src/utils';
