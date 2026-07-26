@@ -1,6 +1,6 @@
 {
   "name": "tycho-solver",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Evolutionary computation and optimization library",
   "type": "module",
   "main": "./dist/index.js",

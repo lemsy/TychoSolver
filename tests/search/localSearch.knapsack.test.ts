@@ -21,8 +21,8 @@ describe('LocalSearch - Knapsack Problem', () => {
             let totalWeight = 0;
             for (let i = 0; i < n; i++) {
                 if (solution[i] === 1) {
-                    totalValue += items[i].value;
-                    totalWeight += items[i].weight;
+                    totalValue += items[i]!.value;
+                    totalWeight += items[i]!.weight;
                 }
             }
             return totalWeight <= maxWeight ? totalValue : 0;
