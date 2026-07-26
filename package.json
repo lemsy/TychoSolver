@@ -28,7 +28,8 @@
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run build",
     "sudoku-demo": "npm run build && node demos/sudoku.js",
-    "tsp-demo": "npm run build && node demos/tsp.js"
+    "tsp-demo": "npm run build && node demos/tsp.js",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "evolutionary computation",
