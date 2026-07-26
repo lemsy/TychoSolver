@@ -27,9 +27,9 @@ describe('Genetic Algorithm Deceptive Trap problem', () => {
             0.2 // mutationRate
         );
         const config = {
-            populationSize: 10,
-            maxGenerations: 100,
-            mutationRate: 0.2,
+            populationSize: 100,
+            maxGenerations: 500,
+            mutationRate: 0.01,
             crossoverRate: 0.7,
             initializationOperator: { initialize: () => initialPopulation },
             mutationOperator
