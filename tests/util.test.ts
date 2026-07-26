@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { geneticAlgorithmUtils } from '../src';
+import { random, randomInt } from '../src/utils';
 
 describe('geneticAlgorithmUtils', () => {
   describe('binaryGeneGenerator', () => {
@@ -10,11 +11,15 @@ describe('geneticAlgorithmUtils', () => {
 
     it('should return both 0 and 1 with enough trials', () => {
       const results = new Set<number>();
+
       // Run many times to ensure we get both 0 and 1
       for (let i = 0; i < 100; i++) {
         results.add(geneticAlgorithmUtils.binaryGeneGenerator());
-        if (results.size === 2) break;
+        if (results.size === 2) {
+          break;
+        }
       }
+
       expect(results.size).toBe(2);
     });
   });
@@ -36,6 +41,7 @@ describe('geneticAlgorithmUtils', () => {
   describe('realValueGeneGenerator', () => {
     it('should generate values within range', () => {
       const generator = geneticAlgorithmUtils.realValueGeneGenerator(5, 10);
+
       for (let i = 0; i < 100; i++) {
         const value = generator();
         expect(value).toBeGreaterThanOrEqual(5);
@@ -47,7 +53,8 @@ describe('geneticAlgorithmUtils', () => {
   describe('random', () => {
     it('should generate a number within the given range', () => {
       for (let i = 0; i < 100; i++) {
-        const value = require('../src/utils').random(5, 10);
+        const value = random(5, 10);
+
         expect(value).toBeGreaterThanOrEqual(5);
         expect(value).toBeLessThan(10);
       }
@@ -57,7 +64,8 @@ describe('geneticAlgorithmUtils', () => {
   describe('randomInt', () => {
     it('should generate an integer within the given inclusive range', () => {
       for (let i = 0; i < 100; i++) {
-        const value = require('../src/utils').randomInt(1, 3);
+        const value = randomInt(1, 3);
+
         expect([1, 2, 3]).toContain(value);
         expect(Number.isInteger(value)).toBe(true);
       }

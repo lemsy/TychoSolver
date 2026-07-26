@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { LocalSearch } from '../../src/search/localSearch';
 import { ObjectiveFunction, NeighborhoodFunction } from '../../src/search/types';
 
@@ -20,14 +20,14 @@ describe('LocalSearch', () => {
 
     expect(result.solution).toBe(10);
     expect(result.fitness).toBe(100);
-    expect(result.iterations).toBeLessThan(20); // Should find solution in fewer iterations
+    expect(result.iterations).toBeLessThan(20);
   });
 
   // Test case: Finding minimum value
-  it('should find local minimum when minimize option is used', async () => {
+  it('should find local minimum when maximize option is used', async () => {
     // Simple function with minimum at x=5
     const objectiveFunction: ObjectiveFunction<number> = (x: number) => {
-      return (x - 5) * (x - 5); // Parabola with minimum at x=5
+      return (x - 5) * (x - 5);
     };
 
     // Generate neighbors that are +/-1 from current solution
@@ -65,24 +65,32 @@ describe('LocalSearch', () => {
     };
 
     const localSearch = new LocalSearch<number[]>();
-    const initialSolution = [0, 0, 0, 0, 0]; // Start with all zeros
+    const initialSolution = [0, 0, 0, 0, 0];
 
-    const result = await localSearch.search(initialSolution, objectiveFunction, neighborhoodFunction);
+    const result = await localSearch.search(
+      initialSolution,
+      objectiveFunction,
+      neighborhoodFunction
+    );
 
-    // Since we're maximizing the sum, all elements should be 1
     expect(result.solution).toEqual([1, 1, 1, 1, 1]);
     expect(result.fitness).toBe(5);
   });
 
   // Test max iterations
   it('should respect maxIterations parameter', async () => {
-    const objectiveFunction = jest.fn((x: number) => x);
-    const neighborhoodFunction = jest.fn((x: number) => [x + 1]);
+    const objectiveFunction = vi.fn((x: number) => x);
+    const neighborhoodFunction = vi.fn((x: number) => [x + 1]);
 
     const localSearch = new LocalSearch<number>();
-    const result = await localSearch.search(0, objectiveFunction, neighborhoodFunction, {
-      maxIterations: 5
-    });
+    const result = await localSearch.search(
+      0,
+      objectiveFunction,
+      neighborhoodFunction,
+      {
+        maxIterations: 5
+      }
+    );
 
     expect(result.iterations).toBeLessThanOrEqual(5);
   });
