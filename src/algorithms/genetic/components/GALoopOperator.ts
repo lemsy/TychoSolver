@@ -62,7 +62,7 @@ export const GALoopOperator = async <T>({
     // --- EvaluationOperator ---
     const isSyncFitness = (fn: any) => {
         try {
-            const res = fn(pop[0]);
+            const res = fn(pop[0]!);
             return !(res instanceof Promise);
         } catch {
             return true;
@@ -79,7 +79,7 @@ export const GALoopOperator = async <T>({
 
     // --- Evaluate initial population ---
     let fitnesses: number[] = await Promise.all(pop.map(ind => evalOp.evaluate(ind)));
-    let bestSolution: T = pop[0];
+    let bestSolution: T = pop[0]!;
     let bestFitness = Math.max(...fitnesses);
     let generation = 0;
 
@@ -135,14 +135,14 @@ export const GALoopOperator = async <T>({
         apply: async (parents: T[]) => {
             let offspring: T[] = [];
             for (let i = 0; i < parents.length; i += 2) {
-                const parent1 = parents[i];
-                const parent2 = parents[i + 1] || parents[0];
+                const parent1 = parents[i]!;
+                const parent2 = parents[i + 1]! || parents[0]!;
                 const crossRes = crossOp.crossover(parent1, parent2);
                 const children = (crossRes && typeof (crossRes as any).then === 'function')
                     ? await (crossRes as Promise<T[]>)
                     : (crossRes as T[]);
-                const child1 = children[0];
-                const child2 = children[1] !== undefined ? children[1] : children[0];
+                const child1 = children[0]!;
+                const child2 = children[1] !== undefined ? children[1]! : children[0]!;
                 offspring.push(mutOp.mutate(child1));
                 offspring.push(mutOp.mutate(child2));
             }
@@ -175,9 +175,12 @@ export const GALoopOperator = async <T>({
 
         // Update best
         const genBestIdx = fitnesses.indexOf(Math.max(...fitnesses));
-        if (fitnesses[genBestIdx] > bestFitness) {
-            bestFitness = fitnesses[genBestIdx];
-            bestSolution = pop[genBestIdx];
+        const genBestFitness = fitnesses[genBestIdx]!;
+        const genBestSolution = pop[genBestIdx]!;
+
+        if (genBestFitness > bestFitness) {
+            bestFitness = genBestFitness;
+            bestSolution = genBestSolution;
         }
         if (fitnessLimit !== undefined && bestFitness >= fitnessLimit) break;
         generation++;

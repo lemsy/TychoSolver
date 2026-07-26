@@ -49,7 +49,7 @@ export class GeneticAlgorithm<T> implements EvolutionaryAlgorithm<T> {
 
     // Step 2: Evaluation
     const evaluationOperator = config.evaluationOperator || new GAEvaluationOperator<T>(fitnessFunction as (ind: T) => number);
-    this.bestSolution = this.population[0];
+    this.bestSolution = this.population[0]!;
     const initialEval = evaluationOperator.evaluate(this.bestSolution);
     if (initialEval && typeof (initialEval as any).then === 'function') {
       throw new Error('Asynchronous evaluation is not supported in GeneticAlgorithm constructor. Provide a synchronous EvaluationOperator.');
@@ -72,18 +72,54 @@ export class GeneticAlgorithm<T> implements EvolutionaryAlgorithm<T> {
     const gens = generations || this.config.maxGenerations;
     const eliteCount = this.config.eliteCount ?? 1;
     const fitnessLimit = this.config.fitnessLimit;
-    const result = await GALoopOperator({
+    const gaConfig: Parameters<typeof GALoopOperator<T>>[0] = {
       population: this.population,
       fitnessFunction: this.fitnessFunction,
       maxGenerations: gens,
-      eliteCount,
-      fitnessLimit,
-      initializationOperator: this.config.initializationOperator,
-      evaluationOperator: this.config.evaluationOperator,
-      mutationOperator: this.config.mutationOperator,
-      crossoverOperator: this.config.crossoverOperator,
-      rng: this.rng
-    });
+      eliteCount
+    };
+
+    if (this.rng) {
+      gaConfig.rng = this.rng;
+    }
+
+    if (fitnessLimit !== undefined) {
+      gaConfig.fitnessLimit = fitnessLimit;
+    }
+
+    if (this.config.initializationOperator) {
+      gaConfig.initializationOperator = this.config.initializationOperator;
+    }
+
+    if (this.config.evaluationOperator) {
+      gaConfig.evaluationOperator = this.config.evaluationOperator;
+    }
+
+    if (this.config.selectionOperator) {
+      gaConfig.selectionOperator = this.config.selectionOperator;
+    }
+
+    if (this.config.crossoverOperator) {
+      gaConfig.crossoverOperator = this.config.crossoverOperator;
+    }
+
+    if (this.config.mutationOperator) {
+      gaConfig.mutationOperator = this.config.mutationOperator;
+    }
+
+    if (this.config.replacementOperator) {
+      gaConfig.replacementOperator = this.config.replacementOperator;
+    }
+
+    if (this.config.elitismOperator) {
+      gaConfig.elitismOperator = this.config.elitismOperator;
+    }
+
+    if (this.config.terminationOperator) {
+      gaConfig.terminationOperator = this.config.terminationOperator;
+    }
+
+    const result = await GALoopOperator(gaConfig);
     this.population = result.population;
     this.bestSolution = result.bestSolution;
     this.bestFitness = result.bestFitness;

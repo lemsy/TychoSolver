@@ -1,5 +1,10 @@
 import { RandomRestartsOperator } from './components/RandomRestartsOperator';
-import { ObjectiveFunction, NeighborhoodFunction, LocalSearchOptions, LocalSearchResult } from './types';
+import {
+  ObjectiveFunction,
+  NeighborhoodFunction,
+  LocalSearchOptions,
+  LocalSearchResult
+} from './types';
 
 export class LocalSearch<T> {
   /**
@@ -12,13 +17,16 @@ export class LocalSearch<T> {
     options: LocalSearchOptions<T> = {}
   ): Promise<LocalSearchResult<T>> {
     // Ensure maximize defaults to true unless explicitly set to false
-    const opts: LocalSearchOptions<T> = { maximize: true, ...options };
-    // Compose the search tree using the operator-based operators (function call style)
+    const opts: LocalSearchOptions<T> = {
+      maximize: true,
+      ...options
+    };
+
     return await RandomRestartsOperator({
       initialSolution,
       objectiveFunction,
-      neighborhoodFunction: neighborhoodFunction ?? undefined,
-      options: opts
+      options: opts,
+      ...(neighborhoodFunction !== undefined && { neighborhoodFunction })
     });
   }
 }

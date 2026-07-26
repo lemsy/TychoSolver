@@ -5,7 +5,7 @@ import { RNG } from '../../../utils/rng';
 export class MutationOperatorImpl<T extends any[]> implements MutationOperator<T> {
     private geneMutator: (gene: T[number], index: number, individual: T) => T[number];
     private mutationRate: number;
-    private rng?: RNG;
+    private readonly rng: RNG | undefined;
 
     constructor(
         geneMutator?: (gene: T[number], index: number, individual: T) => T[number],
@@ -20,13 +20,17 @@ export class MutationOperatorImpl<T extends any[]> implements MutationOperator<T
 
     mutate(individual: T): T {
         const rate = this.mutationRate;
+
         const mutated = individual.map((gene, idx) => {
             const r = this.rng ? this.rng.random() : Math.random();
+
             if (r < rate) {
                 return this.geneMutator(gene, idx, individual);
             }
+
             return gene;
         });
+
         return mutated as T;
     }
 }

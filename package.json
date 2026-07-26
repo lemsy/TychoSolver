@@ -29,7 +29,7 @@
     "prepublishOnly": "npm run build",
     "sudoku-demo": "npm run build && node demos/sudoku.js",
     "tsp-demo": "npm run build && node demos/tsp.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc -p tsconfig.build.json"
   },
   "keywords": [
     "evolutionary computation",
