@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { LocalSearch } from '../../src/search/localSearch';
 import { ObjectiveFunction, NeighborhoodFunction, CostFunction } from '../../src/search/types';
 

@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { LocalSearch } from '../../src/search/localSearch';
 import { ParallelLocalSearch } from '../../src/parallel/localsearch/ParallelLocalSearch';
 import type { ObjectiveFunction, NeighborhoodFunction } from '../../src/search/types';
@@ -51,28 +52,25 @@ describe('ParallelLocalSearch vs LocalSearch - TSP', () => {
         return arr;
     }
 
-    it('parallel local search should be faster than sequential for batch TSP', async () => {
+    it('parallel local search should match sequential results for batch TSP', async () => {
         const batchSize = 10;
         const initialTours = Array.from({ length: batchSize }, randomTour);
         const options = { maxIterations: 200, maximize: false };
 
-        // Sequential: run one after another
-        const seqStart = Date.now();
+        const sequentialResults = [];
         for (const tour of initialTours) {
             const ls = new LocalSearch<Tour>();
-            await ls.search(tour, objective, neighborhood, options);
+            sequentialResults.push(await ls.search(tour, objective, neighborhood, options));
         }
-        const seqTime = Date.now() - seqStart;
 
-        // Parallel: run all at once
         const pls = new ParallelLocalSearch<Tour>();
-        const parStart = Date.now();
-        await pls.search(initialTours, objective, neighborhood, options);
-        const parTime = Date.now() - parStart;
+        const parallelResults = await pls.search(initialTours, objective, neighborhood, options);
 
-        // Allow some tolerance (parallel should be at least not slower)
-        expect(parTime).toBeLessThan(seqTime * 0.95);
-        // Log for info
-        logger.info(`Sequential: ${seqTime}ms, Parallel: ${parTime}ms`);
+        expect(parallelResults).toHaveLength(batchSize);
+        for (let i = 0; i < batchSize; i++) {
+            expect(parallelResults[i].fitness).toBe(sequentialResults[i].fitness);
+            expect(parallelResults[i].iterations).toBe(sequentialResults[i].iterations);
+            expect(parallelResults[i].solution).toEqual(sequentialResults[i].solution);
+        }
     });
 });

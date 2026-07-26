@@ -1,4 +1,5 @@
 import { LocalSearch } from '../../src/search/localSearch';
+import { describe, it, expect } from 'vitest';
 import { ObjectiveFunction, NeighborhoodFunction, LocalSearchOptions } from '../../src/search/types';
 
 describe('LocalSearch - Dynamic Neighborhood', () => {

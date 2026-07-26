@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { MemeticAlgorithm, Individual } from '../../src/algorithms/memetic';
 import { NeighborhoodFunction, ObjectiveFunction } from '../../src/search/types';
 import {

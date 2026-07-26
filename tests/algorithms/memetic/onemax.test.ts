@@ -1,3 +1,5 @@
+import { describe, it, expect } from 'vitest';
+
 import { MemeticAlgorithm, Individual } from '../../../src/algorithms/memetic';
 import { GAEvaluationOperator } from '../../../src/algorithms/genetic/components/EvaluationOperator';
 import { SelectionOperatorImpl } from '../../../src/algorithms/genetic/components/SelectionOperator';
