@@ -16,10 +16,11 @@ describe('MemeticAlgorithm - Knapsack Problem', () => {
             { weight: 4, value: 5 },
             { weight: 5, value: 8 },
             { weight: 9, value: 10 }
-        ];
+        ] as const;
+
         const CAPACITY = 15;
         const GENOME_LENGTH = ITEMS.length;
-        type KnapsackGenome = number[]; // 0/1 vector
+        type KnapsackGenome = number[];
 
         // Individual factory: random 0/1 vector
         const knapsackIndividualFactory = (): KnapsackGenome =>
@@ -29,24 +30,28 @@ describe('MemeticAlgorithm - Knapsack Problem', () => {
         const knapsackFitness = (genome: KnapsackGenome): number => {
             let totalWeight = 0;
             let totalValue = 0;
+
             for (let i = 0; i < genome.length; i++) {
-                if (genome[i]) {
-                    totalWeight += ITEMS[i].weight;
-                    totalValue += ITEMS[i].value;
+                if (genome[i] === 1) {
+                    const item = ITEMS[i]!;
+                    totalWeight += item.weight;
+                    totalValue += item.value;
                 }
             }
-            // Penalize overweight solutions
+
             return totalWeight > CAPACITY ? 0 : totalValue;
         };
 
         // Neighborhood: flip each bit
         const knapsackNeighborhood = (genome: KnapsackGenome): KnapsackGenome[] => {
             const neighbors: KnapsackGenome[] = [];
+
             for (let i = 0; i < genome.length; i++) {
                 const neighbor = [...genome];
-                neighbor[i] = 1 - neighbor[i];
+                neighbor[i] = 1 - (neighbor[i] ?? 0);
                 neighbors.push(neighbor);
             }
+
             return neighbors;
         };
 
@@ -54,7 +59,9 @@ describe('MemeticAlgorithm - Knapsack Problem', () => {
         const evaluationOperator = new GAEvaluationOperator<KnapsackGenome>(knapsackFitness);
         const selectionOperator = new SelectionOperatorImpl<Individual<KnapsackGenome>>();
         const crossoverOperator = new CrossoverOperatorImpl<KnapsackGenome>();
-        const mutationOperator = new MutationOperatorImpl<KnapsackGenome>((gene) => 1 - gene);
+        const mutationOperator = new MutationOperatorImpl<KnapsackGenome>(
+            (gene) => 1 - gene
+        );
 
         const algo = new MemeticAlgorithm<KnapsackGenome>({
             populationSize: 30,
@@ -77,10 +84,14 @@ describe('MemeticAlgorithm - Knapsack Problem', () => {
         });
 
         const result = await algo.evolve();
-        // The optimal value for this instance is 20 (items 1,2,3,4)
-        expect(result.fitness).toBeGreaterThanOrEqual(18); // Accept near-optimal
-        // Should not exceed capacity
-        const totalWeight = result.genome.reduce((sum, bit, i) => sum + (bit ? ITEMS[i].weight : 0), 0);
+
+        expect(result.fitness).toBeGreaterThanOrEqual(18);
+
+        const totalWeight = result.genome.reduce(
+            (sum, bit, i) => sum + (bit ? ITEMS[i]!.weight : 0),
+            0
+        );
+
         expect(totalWeight).toBeLessThanOrEqual(CAPACITY);
     });
 });

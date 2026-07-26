@@ -29,8 +29,8 @@ describe('MemeticAlgorithm - Sudoku Problem', () => {
             const grid = copyGrid(initialGrid);
             for (let i = 0; i < SIZE; i++) {
                 for (let j = 0; j < SIZE; j++) {
-                    if (grid[i][j] === 0) {
-                        grid[i][j] = Math.floor(Math.random() * SIZE) + 1;
+                    if (grid[i]![j] === 0) {
+                        grid[i]![j] = Math.floor(Math.random() * SIZE) + 1;
                     }
                 }
             }
@@ -43,13 +43,13 @@ describe('MemeticAlgorithm - Sudoku Problem', () => {
             // Rows
             for (let i = 0; i < SIZE; i++) {
                 const seen = new Set();
-                for (let j = 0; j < SIZE; j++) seen.add(grid[i][j]);
+                for (let j = 0; j < SIZE; j++) seen.add(grid[i]![j]!);
                 score += seen.size;
             }
             // Columns
             for (let j = 0; j < SIZE; j++) {
                 const seen = new Set();
-                for (let i = 0; i < SIZE; i++) seen.add(grid[i][j]);
+                for (let i = 0; i < SIZE; i++) seen.add(grid[i]![j]!);
                 score += seen.size;
             }
             // Subgrids
@@ -58,7 +58,7 @@ describe('MemeticAlgorithm - Sudoku Problem', () => {
                     const seen = new Set();
                     for (let i = 0; i < SUBGRID; i++) {
                         for (let j = 0; j < SUBGRID; j++) {
-                            seen.add(grid[bi + i][bj + j]);
+                            seen.add(grid[bi + i]![bj + j]!);
                         }
                     }
                     score += seen.size;
@@ -72,11 +72,11 @@ describe('MemeticAlgorithm - Sudoku Problem', () => {
             const neighbors: SudokuGenome[] = [];
             for (let i = 0; i < SIZE; i++) {
                 for (let j = 0; j < SIZE; j++) {
-                    if (initialGrid[i][j] === 0) {
+                    if (initialGrid[i]![j] === 0) {
                         for (let v = 1; v <= SIZE; v++) {
-                            if (grid[i][j] !== v) {
+                            if (grid[i]![j] !== v) {
                                 const neighbor = copyGrid(grid);
-                                neighbor[i][j] = v;
+                                neighbor[i]![j] = v;
                                 neighbors.push(neighbor);
                             }
                         }
@@ -138,8 +138,8 @@ describe('MemeticAlgorithm - Sudoku Problem', () => {
             const grid = copyGrid(initialGrid);
             for (let i = 0; i < SIZE; i++) {
                 for (let j = 0; j < SIZE; j++) {
-                    if (grid[i][j] === 0) {
-                        grid[i][j] = Math.floor(Math.random() * SIZE) + 1;
+                    if (grid[i]![j]! === 0) {
+                        grid[i]![j] = Math.floor(Math.random() * SIZE) + 1;
                     }
                 }
             }
@@ -148,36 +148,45 @@ describe('MemeticAlgorithm - Sudoku Problem', () => {
 
         const sudokuFitness = (grid: SudokuGenome): number => {
             let score = 0;
+
             // Rows
             for (let i = 0; i < SIZE; i++) {
-                const seen = new Set();
-                for (let j = 0; j < SIZE; j++) seen.add(grid[i][j]);
+                const seen = new Set<number>();
+                for (let j = 0; j < SIZE; j++) {
+                    seen.add(grid[i]![j]!);
+                }
                 score += seen.size;
             }
+
             // Columns
             for (let j = 0; j < SIZE; j++) {
-                const seen = new Set();
-                for (let i = 0; i < SIZE; i++) seen.add(grid[i][j]);
+                const seen = new Set<number>();
+                for (let i = 0; i < SIZE; i++) {
+                    seen.add(grid[i]![j]!);
+                }
                 score += seen.size;
             }
+
             return score;
         };
 
         const sudokuNeighborhood = (grid: SudokuGenome): SudokuGenome[] => {
             const neighbors: SudokuGenome[] = [];
+
             for (let i = 0; i < SIZE; i++) {
                 for (let j = 0; j < SIZE; j++) {
-                    if (initialGrid[i][j] === 0) {
+                    if (initialGrid[i]![j]! === 0) {
                         for (let v = 1; v <= SIZE; v++) {
-                            if (grid[i][j] !== v) {
+                            if (grid[i]![j]! !== v) {
                                 const neighbor = copyGrid(grid);
-                                neighbor[i][j] = v;
+                                neighbor[i]![j] = v;
                                 neighbors.push(neighbor);
                             }
                         }
                     }
                 }
             }
+
             return neighbors;
         };
 
