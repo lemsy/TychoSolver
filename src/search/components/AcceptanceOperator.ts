@@ -20,8 +20,13 @@ export const AcceptanceOperator = async ({
     iterations?: number;
 }) => {
     // Accept improvement or tie with cost improvement
-    const accepted = (options.maximize ? candidateFitness > currentFitness : candidateFitness < currentFitness)
-        || (isTie && isCostImprovement);
+    const maximize = options.maximize ?? true;
+
+    const accepted =
+        (maximize
+            ? candidateFitness > currentFitness
+            : candidateFitness < currentFitness) ||
+        (isTie && isCostImprovement);
     const nextSolution = accepted ? candidateSolution : currentSolution;
     const nextFitness = accepted ? candidateFitness : currentFitness;
     // Call onClimb if improvement
